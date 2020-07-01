@@ -33,7 +33,7 @@ First we want to add a method that initializes a given queue: We will call it `s
 
 ==== 1. Modifying UcManageQueue
 
-Inside `jtqj-api/queuemanagement/logic/api/usecase/UcManageQueue` the declaration of the method will be added:
+Inside `jtqj-api/src/main/java/com/devonfw/application/jtqj/queuemanagement/logic/api/usecase/UcManageQueue` the declaration of the method will be added:
 
 [source,java]
 ----
@@ -136,6 +136,18 @@ We also need to import List: `import java.util.List;` and `Media Type` with `imp
 
 ==== 3.Modifying QueuemanagementImpl
 
+Now add the method `startQueue` to QueuemanagementImpl:
+
+[source,java]
+----
+@Override
+	public QueueEto startQueue(QueueEto queue) {
+		return this.ucManageQueue.startQueue(queue);
+	}
+----
+
+There will be one error remaining in the UcManageQueueImpl regarding accesscodemanagement. This error will be resolved, when working on the AccessCode component.
+
 
 === Modifying UcFindQueue
  
@@ -152,19 +164,7 @@ In `jtqj-api/src/main/java/com.deovonfw.application.jtqj/queuemanagement/logic/a
   QueueEto findDailyQueue();
 ----
 
-As `QueuemanagementImpl` implements `Queuemanagement` we have to add `findDailyQueue` in `jtqj-core/src/main/java/com.devonfw.application.jtqj/queuemanagement/logic/impl/usecase/Queuemanagement.java`
-
-[source,java]
-----
-...
-@Override
-  public QueueEto findDailyQueue() {
-
-    return this.ucFindQueue.findDailyQueue();
-  }
-----
-
-As `UcFindQueueImpl` implements `UcFindQueue` we will also have to ad a method `findDailyQueue` in `UcFindQueueImpl`:
+We will have to implement this method `findDailyQueue` in `UcFindQueueImpl`:
 
 [source,java]
 ----
@@ -202,6 +202,21 @@ As `UcFindQueueImpl` implements `UcFindQueue` we will also have to ad a method `
 		return haveQueue;
 	}
 ----
+
+We have to add `findDailyQueue` in `jtqj-core/src/main/java/com.devonfw.application.jtqj/queuemanagement/logic/impl/usecase/Queuemanagement.java`
+
+
+[source,java]
+----
+...
+@Override
+  public QueueEto findDailyQueue() {
+
+    return this.ucFindQueue.findDailyQueue();
+  }
+----
+
+
 To resolve the errors, import Timestamp (`import java.sql.Timestamp;`) and sort (`import org.springframework.data.domain.Sort;`)
 
 
