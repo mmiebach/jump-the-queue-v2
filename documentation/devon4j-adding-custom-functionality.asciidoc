@@ -453,7 +453,7 @@ Now we need to import the needed classes into `UcManageAccessCode`:
 . `import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;`
 
 
-Similar to the Quemanagement, we want the AccessCodemanagement to implement UcManageCode: In `jtqj-api/src/main/java/com/devonfw/application/jtqj/accesscodemanagement/logic/api/Accesscodemanagement` add UcManageCode. It should look like this.
+Similar to the Quemanagement, we want the AccessCodemanagement to implement UcManageCode: In `jtqj-api/src/main/java/com/devonfw/application/jtqj/accesscodemanagement/logic/api/Accesscodemanagement` add UcManageCode. It should look like this:
 [source,java]
 ----
 package com.devonfw.application.jtqj.accesscodemanagement.logic.api;
@@ -468,7 +468,7 @@ public interface Accesscodemanagement extends UcFindAccessCode, UcManageAccessCo
 }
 ----
 
-Then in `jtqj-core`, inside the package `accesscodemanagement/logic/impl/usecase`, we are going to create a class called `UcManageAccessCodeImpl`, implementing the definition we just made and extending `AbstractAccessCodeUc`. This will allow us to have access to the repository.
+Then in `jtqj-core`, inside the package `accesscodemanagement/logic/impl/usecase`, we are going to create a class called `UcManageAccessCodeImpl`, implementing `UcManageAccessCode` we just made and extending `AbstractAccessCodeUc`. This will allow us to have access to the repository.
 
 Also, here is the part where we will use the methods that we created in the `Queue` component:
 
@@ -639,31 +639,9 @@ public class UcManageAccessCodeImpl extends AbstractAccessCodeUc implements UcMa
 ----
 
 
-The errors left concern the functions `findDailyQueue` , `findByQueue`, `findNextCode` , `findCurrentCode`. We will implement these methods now:
-
-
-
-
 
 Taking a closer look at the code, we can see that, in order to use the methods from the `UcFindAccessCodeImpl`, we need to use the parent (`Accesscodemanagement`) instead of the class directly. Also, following the `devon4j` structure, each component needs to take care of its own. In this case, by using the method `getQueuemanagement()`, we get access to the `Queuemanagement` injection that will allow the use of the methods we created earlier in the use cases in the queue component.
 
-
-Inside `jtqj-api`, in the class `accesscodemanagement/logic/api/Accesscodemanagement` we are going to extend the `UcManageAccessCode` that we just defined:
-
-[source,java]
-----
-...
-
-import com.devonfw.application.jtqj.accesscodemanagement.logic.api.usecase.UcFindAccessCode;
-import com.devonfw.application.jtqj.accesscodemanagement.logic.api.usecase.UcManageAccessCode;
-
-/**
- * Interface for Accesscodemanagement component.
- */
-public interface Accesscodemanagement extends UcFindAccessCode, UcManageAccessCode {
-
-}
-----
 
 After that, in `jtqj-core`, in the class `accesscodemanagement/logic/impl/AccesscodemanagementImpl`, we will see that an error has appeared because the methods
 from the extended interfaces are missing. We add the unimplemented methods and inject the `usecasemanage` solving the error:
