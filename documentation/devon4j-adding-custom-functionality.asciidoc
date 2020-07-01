@@ -244,12 +244,12 @@ public interface UcFindAccessCode {
    * @param criteria the {@link AccessCodeSearchCriteriaTo}.
    * @return the {@link List} of matching {@link AccessCodeEto}s.
    */
-  Page<AccessCodeEto> findAccessCodeEtos(AccessCodeSearchCriteriaTo criteria);
+  Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria);
 
 }
 ----
 
-Once that is finished, we will see that an error is going to appear in `UcFindAccessCodeImpl` and `AccesscodemanagementImpl`. The second error will be solved in later steps. To solve the first error, in `jtqj-core` the `accesscodemanagement/logic/impl/usecase/UcFindAccessCodeImpl` class needs to implement another method:
+Once that is finished, we will see that an error is going to appear in `UcFindAccessCodeImpl` and `AccesscodemanagementImpl`. In `accesscodemanagement/logic/impl/usecase/UcFindAccessCodeImpl` we need to implement the method:
 
 [source,java]
 ----
@@ -260,7 +260,7 @@ public class UcFindAccessCodeImpl extends AbstractAccessCodeUc implements UcFind
   ...
 
   @Override
-  public Page<AccessCodeEto> findAccessCodeEtos(AccessCodeSearchCriteriaTo criteria) {
+  public Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria) {
 
     Page<AccessCodeEntity> accessCodes = getAccessCodeRepository().findByCriteria(criteria);
 
@@ -272,9 +272,21 @@ public class UcFindAccessCodeImpl extends AbstractAccessCodeUc implements UcFind
 
 This method uses an `AcessCodeSearchCriteriaTo` to find a page of entities -- `AccessCodeEntity` -- using the repository. After that, it changes the mapping of the list from `AccessCodeEntity` to `AccessCodeEto`. 
 
-==== Creating the _usecasemanage_
-In `jtqj-api`, inside the package `accesscodemanagement/logic/api/usecase/`, we are going to create a new interface called `UcManageAccessCode`, where we will define the save and delete methods:
+Now we will add the method to AccessCodemanagementImpl:
 
+[source,java]
+----
+@Override
+	public Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria) {
+		return this.ucFindAccessCode.findAccessCodes(criteria);
+	}
+
+----
+
+
+==== Creating the _usecasemanage_
+In `jtqj-api`, inside the package `accesscodemanagement/logic/api/usecase/`, we are going to create a new interface called `UcManageAccessCode`, where we will define the save and delete methods.
+Also we will define the methods `updateCodesOnStartQueue`, `NextCodeCto` and `EstimatedTime`.
 [source,java]
 ----
 ...
@@ -325,7 +337,138 @@ public interface UcManageAccessCode {
 }
 ----
 
-Then `jtqj-core`, inside the package `accesscodemanagement/logic/impl/usecase`, we are going to create a class called `UcManageAccessCodeImpl`, implementing the definition we just made and extending `AbstractAccessCodeUc`. This will allow us to have access to the repository.
+We will now get some errors related to the last three methods. We will therefore create classes for these:
+
+We will therefore add a Class in `jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` called `EstimatedTime` with the following code:
+
+[source,java]
+----
+public class EstimatedTime {
+  private long miliseconds;
+
+  private long defaultTimeByUserInMs;
+
+  /**
+   * @return the defaultTimeByUserInMs
+   */
+  public long getDefaultTimeByUserInMs() {
+
+    return this.defaultTimeByUserInMs;
+  }
+
+  /**
+   * @param defaultTimeByUserInMs the defaultTimeByUserInMs to set
+   */
+  public void setDefaultTimeByUserInMs(long defaultTimeByUserInMs) {
+
+    this.defaultTimeByUserInMs = defaultTimeByUserInMs;
+  }
+
+  /**
+   * @return the estimated
+   */
+  public long getMiliseconds() {
+
+    return this.miliseconds;
+  }
+
+  /**
+   * @param estimated the estimated to set
+   */
+  public void setMiliseconds(long miliseconds) {
+
+    this.miliseconds = miliseconds;
+  }
+}
+----
+
+Another class `NextCodeCto` will also be added in `jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with
+
+[source, java]
+----
+public class NextCodeCto {
+  private AccessCodeEto accessCode;
+
+  /**
+   * @return the accessCode
+   */
+  public AccessCodeEto getAccessCode() {
+
+    return this.accessCode;
+  }
+
+  /**
+   * @param accessCode the accessCode to set
+   */
+  public void setAccessCode(AccessCodeEto accessCode) {
+
+    this.accessCode = accessCode;
+  }
+
+  /**
+   * @return the remainingCodes
+   */
+  public RemainingCodes getRemainingCodes() {
+
+    return this.remainingCodes;
+  }
+
+  /**
+   * @param remainingCodes the remainingCodes to set
+   */
+  public void setRemainingCodes(RemainingCodes remainingCodes) {
+
+    this.remainingCodes = remainingCodes;
+  }
+
+  private RemainingCodes remainingCodes;
+}
+----
+
+For this class we need a class `RemainingCodes` also in jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with:
+
+[source,java]
+----
+public class RemainingCodes {
+	private int remainingCodes;
+
+	/**
+	 * @return the remainingCodes
+	 */
+	public int getRemainingCodes() {
+		return remainingCodes;
+	}
+
+	/**
+	 * @param remainingCodes the remainingCodes to set
+	 */
+	public void setRemainingCodes(int remainingCodes) {
+		this.remainingCodes = remainingCodes;
+	}
+}
+
+----
+Now we need to import the needed classes into `UcManageAccessCode`:
+. `import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.EstimatedTime;`
+. `import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;`
+
+
+Similar to the Quemanagement, we want the AccessCodemanagement to implement UcManageCode: In `jtqj-api/src/main/java/com/devonfw/application/jtqj/accesscodemanagement/logic/api/Accesscodemanagement` add UcManageCode. It should look like this.
+[source,java]
+----
+package com.devonfw.application.jtqj.accesscodemanagement.logic.api;
+
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.usecase.UcFindAccessCode;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.usecase.UcManageAccessCode;
+/**
+ * Interface for Accesscodemanagement component.
+ */
+public interface Accesscodemanagement extends UcFindAccessCode, UcManageAccessCode {
+
+}
+----
+
+Then in `jtqj-core`, inside the package `accesscodemanagement/logic/impl/usecase`, we are going to create a class called `UcManageAccessCodeImpl`, implementing the definition we just made and extending `AbstractAccessCodeUc`. This will allow us to have access to the repository.
 
 Also, here is the part where we will use the methods that we created in the `Queue` component:
 
@@ -494,117 +637,7 @@ public class UcManageAccessCodeImpl extends AbstractAccessCodeUc implements UcMa
   }
 }
 ----
-There will be errors regarding `EstimatedTime`, `NextCodeCto`, `findDailyQueue` , `findCurrentCode` , `updateCodesOnStartQueue`, `findByQueue`, `findNextCode` and `calculateEstimatedTime`.
 
-We will therefore add a Class in `jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` called `EstimatedTime` with the following code:
-
-[source,java]
-----
-public class EstimatedTime {
-  private long miliseconds;
-
-  private long defaultTimeByUserInMs;
-
-  /**
-   * @return the defaultTimeByUserInMs
-   */
-  public long getDefaultTimeByUserInMs() {
-
-    return this.defaultTimeByUserInMs;
-  }
-
-  /**
-   * @param defaultTimeByUserInMs the defaultTimeByUserInMs to set
-   */
-  public void setDefaultTimeByUserInMs(long defaultTimeByUserInMs) {
-
-    this.defaultTimeByUserInMs = defaultTimeByUserInMs;
-  }
-
-  /**
-   * @return the estimated
-   */
-  public long getMiliseconds() {
-
-    return this.miliseconds;
-  }
-
-  /**
-   * @param estimated the estimated to set
-   */
-  public void setMiliseconds(long miliseconds) {
-
-    this.miliseconds = miliseconds;
-  }
-}
-----
-
-Another class `NextCodeCto` will also be added in `jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with
-
-[source, java]
-----
-public class NextCodeCto {
-  private AccessCodeEto accessCode;
-
-  /**
-   * @return the accessCode
-   */
-  public AccessCodeEto getAccessCode() {
-
-    return this.accessCode;
-  }
-
-  /**
-   * @param accessCode the accessCode to set
-   */
-  public void setAccessCode(AccessCodeEto accessCode) {
-
-    this.accessCode = accessCode;
-  }
-
-  /**
-   * @return the remainingCodes
-   */
-  public RemainingCodes getRemainingCodes() {
-
-    return this.remainingCodes;
-  }
-
-  /**
-   * @param remainingCodes the remainingCodes to set
-   */
-  public void setRemainingCodes(RemainingCodes remainingCodes) {
-
-    this.remainingCodes = remainingCodes;
-  }
-
-  private RemainingCodes remainingCodes;
-}
-----
-
-For this class we need a class `RemainingCodes` also in jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with:
-
-[source,java]
-----
-public class RemainingCodes {
-	private int remainingCodes;
-
-	/**
-	 * @return the remainingCodes
-	 */
-	public int getRemainingCodes() {
-		return remainingCodes;
-	}
-
-	/**
-	 * @param remainingCodes the remainingCodes to set
-	 */
-	public void setRemainingCodes(int remainingCodes) {
-		this.remainingCodes = remainingCodes;
-	}
-}
-
-----
 
 The errors left concern the functions `findDailyQueue` , `findByQueue`, `findNextCode` , `findCurrentCode`. We will implement these methods now:
 
@@ -699,11 +732,7 @@ public class AccesscodemanagementImpl extends AbstractComponentFacade implements
 		return this.ucFindAccessCode.findAccessCode(id);
 	}
 
-	@Override
-	public Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria) {
-		return this.ucFindAccessCode.findAccessCodes(criteria);
-	}
-
+	
 	@Override
 	public List<AccessCodeEto> findByQueue(long queueId) {
 		return this.ucFindAccessCode.findByQueue(queueId);
