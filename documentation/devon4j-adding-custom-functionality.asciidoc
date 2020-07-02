@@ -159,6 +159,10 @@ There will be one error remaining in the UcManageQueueImpl regarding accesscodem
 
 
 === Modifying UcFindQueue
+
+==== 1. Modifying UcFindQueue
+
+// TODO why do we want `findDailyQueue` ?
  
 In `jtqj-api/src/main/java/com.deovonfw.application.jtqj/queuemanagement/logic/api/usecase/UcFindQueue.java` add the following Method:
 
@@ -172,6 +176,8 @@ In `jtqj-api/src/main/java/com.deovonfw.application.jtqj/queuemanagement/logic/a
    */
   QueueEto findDailyQueue();
 ----
+
+==== 2. Implementing the Method in UcFindQueueImpl
 
 We will have to implement this method `findDailyQueue` in `UcFindQueueImpl`:
 
@@ -212,6 +218,8 @@ We will have to implement this method `findDailyQueue` in `UcFindQueueImpl`:
 	}
 ----
 
+==== 3. Modifying QueuemanagementImpl
+
 We have to add `findDailyQueue` in `jtqj-core/src/main/java/com.devonfw.application.jtqj/queuemanagement/logic/impl/usecase/Queuemanagement.java`
 
 
@@ -230,10 +238,15 @@ To resolve the errors, import Timestamp (`import java.sql.Timestamp;`) and sort 
 
 
 
-=== Creating the usecasemanage for the AccessCode
+=== Adding Methods to the AccessCode Component
 
-==== Adding method to the AccessCode _usecasefind_
-Before creating the usecasemanage, a method needs to be added to the usecasefind, that will recover our `AccessCodeEto`. In `jtqj-api`, inside the package `accesscodemanagement/logic/api/usecase/`, the file `UcFindAccessCode` is going to be modified, adding the new method to the interface:
+We will first deal with the _usecasefind_, as it already exists. Once this is done , we will create the _usecasemanage_.
+
+
+==== 1. Adding a Method to UcFindAccessCode
+
+ 
+We want to add a method to the usecasefind, that will recover our `AccessCodeEto`. In `jtqj-api`, inside the package `accesscodemanagement/logic/api/usecase/`, the file `UcFindAccessCode` is going to be modified, adding the new method to the interface:
 
 [source,java]
 ----
@@ -258,7 +271,10 @@ public interface UcFindAccessCode {
 }
 ----
 
-Once that is finished, we will see that an error is going to appear in `UcFindAccessCodeImpl` and `AccesscodemanagementImpl`. In `accesscodemanagement/logic/impl/usecase/UcFindAccessCodeImpl` we need to implement the method:
+
+==== 2. Implementing the method in UcFindAccessCodeImpl 
+
+In `accesscodemanagement/logic/impl/usecase/UcFindAccessCodeImpl` we need to implement the method:
 
 [source,java]
 ----
@@ -281,7 +297,11 @@ public class UcFindAccessCodeImpl extends AbstractAccessCodeUc implements UcFind
 
 This method uses an `AcessCodeSearchCriteriaTo` to find a page of entities -- `AccessCodeEntity` -- using the repository. After that, it changes the mapping of the list from `AccessCodeEntity` to `AccessCodeEto`. 
 
-Now we will add the method to AccessCodemanagementImpl:
+
+==== 3. Modifying AccesscodemanagementImpl
+
+Now we will add the method to AccesscodemanagementImpl. In the `jtqj-core` in `accesscodemanagement/logic/impl/AccesscodemanagementImpl` add the method as follows:
+
 
 [source,java]
 ----
@@ -292,9 +312,15 @@ Now we will add the method to AccessCodemanagementImpl:
 
 ----
 
+
+
 We will now define some methods for later use:
 
-in `UcFindAccessCode` add:
+==== 1. Adding the Methods in UcFindAccessCode
+
+// TODO some info for all methods
+
+In the `jtqj-api` in `accesscodemanagement/logic/api/usecase/UcFindAccessCode` add the following methods:
 
 [source, java]
 ----
@@ -342,7 +368,9 @@ in `UcFindAccessCode` add:
 	AccessCodeEto findAccessCode(long id);
 ----
 
-We will now get some errors related to the last two methods. We will therefore create classes for these:
+We will now get some errors related to `NextCodeCto` and `RemainingCodes`. We will therefore create classes for these.
+
+===== Resolving the Errors related to `NextCodeCto` and `RemainingCodes`
 
 A class `NextCodeCto` will be added in `jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with
 
@@ -387,7 +415,7 @@ public class NextCodeCto {
 }
 ----
 
-For this class we need a class `RemainingCodes` also in jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with:
+We also create `RemainingCodes` in jtqj-api/src/main/java/com.devonfw.application.jtqj.accesscodemanagement.logic.api.to` with:
 
 [source,java]
 ----
@@ -411,8 +439,7 @@ public class RemainingCodes {
 
 ----
 
-We will also need to import these:
-
+To resolve the errors, we will need to import these classes:
 [source, java]
 ----
 ...
@@ -424,7 +451,9 @@ import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingC
 
 ----
 
-Now we will implement these methods in UcFindAccessCodeImpl:
+==== 2. Implementing the Methods in UcFindAccessCodeImpl
+
+Now we will implement the methods we  methods in UcFindAccessCodeImpl. In the `jtqj-core` add the following methods to `accesscodemanagement/logic/impl/usecase/UcFindAccessCodeImpl`
 
 [source, java]
 ----
@@ -499,13 +528,20 @@ public AccessCodeEto findAccessCode(long id) {
 
 We will need to import some classes:
 
+[source, java]
+----
+...
 import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingCodes;
 
 import com.devonfw.application.jtqj.general.common.api.Status;
 
 import java.util.Optional;
+...
+----
 
-Now add the methods to the AccesscodeManagementImpl:
+==== 3. Modifying AccesscodemanagementImpl
+
+We still need to add the methods to the AccesscodeManagementImpl. In `accesscodemanagement/logic/impl/AccesscodemanagementImpl` we are going to add these methods.
 
 
 [source, java]
@@ -554,6 +590,7 @@ import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCt
 
 
 ==== Creating the _usecasemanage_
+
 In `jtqj-api`, inside the package `accesscodemanagement/logic/api/usecase/`, we are going to create a new interface called `UcManageAccessCode`, where we will define the save and delete methods.
 Also we will define the methods `updateCodesOnStartQueue`, `NextCodeCto` and `EstimatedTime`.
 [source,java]
