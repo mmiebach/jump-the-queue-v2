@@ -21,7 +21,7 @@ The _JumpTheQueue_ design defines a xref:jump-the-queue-design#user-story-regist
 In our _standard_ implementation of the _JumpTheQueue_ app we have used _CobiGen_ to generate the components, so we have a default implementation of the services. Since the _AccessCode_ component is more complex and requires the use of _CTOs_, we need to create our own _usecasemanage_ and the methods _save_ and _delete_.
 We also have to add some methods to the Queue component.
 
-=== Adding Methods to the Queue Component
+=== Adding Methods Process
 
 The process of adding a method to any component requires the floowing steps:
 
@@ -29,15 +29,17 @@ The process of adding a method to any component requires the floowing steps:
 . Implement the methods in the `usecaseimpl`.
 . Modify the management implementation `managementimpl`.
 
+=== Adding Methods to the Queue Component
+
 First we want to add a method that initializes a given queue: We will call it `startQueue`.
 
 ==== 1. Modifying UcManageQueue
 
-Inside `jtqj-api/src/main/java/com/devonfw/application/jtqj/queuemanagement/logic/api/usecase/UcManageQueue` the declaration of the method will be added:
+Inside `jtqj-api` in the `queuemanagement/logic/api/usecase/UcManageQueue` the declaration of the method will be added:
 
 [source,java]
 ----
-
+package com.devonfw.application.jtqj.queuemanagement.logic.api.usecase;
 ...
 
 /**
@@ -94,7 +96,7 @@ In `jtqj-core/src/main/java/queuemanagement/logic/impl/usecase/UcManageQueueImpl
 
 ----
 
-There will now be some errors related to ServerSse, List and accesscodemanagement. The first two errors will be resolved now, the error related to accesscodemanagement will be resolved when we work on the AccessCode component.
+There will now be some errors related to ServerSse, List, MediaType and accesscodemanagement. The first two errors will be resolved now, the error related to accesscodemanagement will be resolved when we work on the AccessCode component.
 
 
 ===== Resolving the ServerSse error
@@ -129,14 +131,21 @@ public class ServerSse {
     }
 }
 ----
-Now we have to import the class into `UcManageQueueImpl`: `import com.devonfw.application.jtqj.accesscodemanagement.service.impl.rest.ServerSse;`
+Now we have to import the `ServerSse`-class into `UcManageQueueImpl`. 
+In `jtqj-core/src/main/java/com/devonfw/application/jtqj/queuemanagement/logic/impl/usecase` add 
+`import com.devonfw.application.jtqj.accesscodemanagement.service.impl.rest.ServerSse;` to `UcManageQueueImpl`
 
-We also need to import List: `import java.util.List;` and `Media Type` with `import org.springframework.http.MediaType;`
+===== Resolving the errors related to List and MediaType
+
+We also need to import List: `import java.util.List;` and `Media Type` with `import org.springframework.http.MediaType;` in `UcManageQueueImpl`.
 
 
 ==== 3.Modifying QueuemanagementImpl
 
-Now add the method `startQueue` to QueuemanagementImpl:
+
+There will appear an error in `QueuemanagementImpl`, as `startQueue` is still missing here.
+We therefore have to add `startQueue` to `QueuemanagementImpl`.
+In `queuemanagement/logic/impl/Queuemanagement` add the missing method:
 
 [source,java]
 ----
