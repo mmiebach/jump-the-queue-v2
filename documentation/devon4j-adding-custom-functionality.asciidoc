@@ -97,7 +97,7 @@ In `jtqj-core/src/main/java/queuemanagement/logic/impl/usecase/UcManageQueueImpl
 There will now be some errors related to ServerSse, List and accesscodemanagement. The first two errors will be resolved now, the error related to accesscodemanagement will be resolved when we work on the AccessCode component.
 
 
-===== 1.Resolving the ServerSse error
+===== Resolving the ServerSse error
 
 In `jtqj-core/com.devonfw.application.jtqj.accesscodemanagement.service.impl.rest` add a new java class called `ServerSse` containing the following:
 
