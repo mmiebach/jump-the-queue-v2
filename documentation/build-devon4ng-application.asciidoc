@@ -1,0 +1,290 @@
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+= Build your own devon4ng Application
+
+In this chapter we are going to see how to build a new devon4ng from scratch. The proposal of this tutorial is to end having enough knowledge of Angular and the of the remaining technologies regarding devon4ng to know how to start developing. If you need more advanced and specific functionalities, you can find them on the cookbook.
+
+== Goal of JumpTheQueue
+
+These mock-ups show what you can expect to see after you finished this tutorial. It will be an App to manage codes assigned to people attending a queue in order to ease the management of the queue. With a code, you can jump between positions in the queue and you will be able to keep track of your position.
+
+image::images/devon4ng/3.BuildYourOwn/mockups.png[JumpTheQueue Mock-Ups, 500]
+
+So, hands on it: Let's configure the environment and build this app!
+
+== Setting up the devonfw Tools (recommended)
+
+We will be utilizing Node.js, npm and Yarn to create our Angular front end. Using Node.js inside the devonfw environment avoids a manual download and installation, and keeps the tool isolated from other projects, so we don't run into version conflicts down the road.
+
+Node should already be 'installed' inside your devonfw environment (in the `/software/node` directory). However, to make sure we have its most current version and the right package manager (Yarn) available, execute the following commands anywhere inside the devonfw environment:
+
+----
+devon node setup
+
+devon yarn setup
+----
+
+== Installing Global Tools (optional)
+
+[WARNING]
+====
+If you are using a devonfw work environment -- as instructed in the https://github.com/devonfw/jump-the-queue/wiki/build-devon4j-application#setting-up-a-devonfw-work-environment[devon4j] part of this tutorial -- you *DON'T* have to install these tools globally, since they can be accessed from the devon CLI. +
+A global installation is only useful if you want to create Angular projects _outside_ of a devonfw environment or without the devon CLI.
+====
+
+=== Visual Studio Code
+
+To install the editor, download the installer from the https://code.visualstudio.com/Download[official page] and install it.
+
+Once installed, the first thing you should do is install the extensions that will help you during the development. To do that, follow these steps:
+
+You can easily open VS Code, by running the following comand in your workspace: `devon vscode run`.
+
+1. Go to the _Extensions_ panel in VS Code and search for "devonfw" on the market place.
+
+2. Install the `devonfw Platform Extension Pack` (this might take a while).
+
+=== Node.js
+
+Go to https://nodejs.org/en/[nodejs.org] and download the version you like the most -- LTS or Current -- as you wish.
+
+The recommendation is to install the latest version, but keep in mind that to use Angular CLI, your version must be at least 8.x and to use npm at least 5.x. If you have Node.js already installed on your computer, this is a good moment to check your version and upgrade if necessary.
+
+=== TypeScript
+
+Let’s install what is going to be the main language during development: TypeScript. This ES6 superset is tightly coupled to the Angular framework and will help us to get a final clean and distributable JavaScript code. This is installed globally with npm, the package manager used to install and create JavaScript modules in Node.js, that is installed along with Node. To install TypeScript, you don’t have to install npm explicitly, just run this command:
+
+----
+npm install –g typescript
+----
+
+=== Yarn
+
+Just like npm, https://yarnpkg.com/en/[Yarn] is a package manager for JavaScript/Node modules. Yarn is quite a bit faster and more usable in our opinion, so we decided to use it to manage the dependencies of devon4ng projects.
+
+To install Yarn, you only have to go to the official https://yarnpkg.com/en/docs/install[installation page] and follow the instructions.
+
+However, if you feel more comfortable with npm, you can keep using it.
+
+=== Angular/CLI
+
+This CLI is specifically built to make Angular projects easier to develop, maintain and deploy, so we are going to make use of it.
+
+To install the Angular/CLI, you have to run this command in your console prompt:
+
+----
+npm install -g @angular/cli
+----
+
+Now you should be able to run `ng version` and this will appear in the console:
+
+image::images/devon4ng/3.BuildYourOwn/angularcli.png[Angular CLI Version]
+
+In addition, you can set Yarn as the default package manager to use with Angular/CLI by running this command: 
+
+----
+ng config -g cli.packageManager yarn
+----
+
+Finally, once all these tools have been installed successfully, you are ready to create a new project.
+
+== Creating a New Project with the Angular/CLI
+
+One of the main reasons to use Angular/CLI is the feature to create whole new projects from scratch by simply running one command. We are going create an Angular 7  (legacy) project, to keep this tutorial working even if a new Angular version is released. Inside the `C:\...\workspaces\main\jumpthequeue` directory run:
+
+----
+npx -p @angular/cli@7 ng new angular
+----
+
+[NOTE]
+====
+If you want to create a 'real' project on your own later on, you should do so using the _lastest_ Angular version by running:
+
+----
+ng new <project name>
+----
+
+Where <project name> is the name of the Angular project you want to create.
+
+In the case shown above we called our project `angular`, since we want to distribute its code as part of our complete `jumpthequeue` project. This is analogous to the `java` directory used for our devon4j backend.
+====
+
+After executing the command, Angular/CLI will ask, if we want to use Angular routing (*Yes*) and what stylesheet format we want to use (*SCSS*):
+
+image::images/devon4ng/3.BuildYourOwn/ngnewoptions.png[Angular Options]
+
+This command will establish a project directory structure, initialize default files, and store references to basic dependencies in the `package.json` file:
+
+image::images/devon4ng/3.BuildYourOwn/ngnew.png[Angular Project Creation]
+
+After project creation, navigate into the new `/angular` folder and execute the following command, to set Yarn as your default package manager for this project:
+
+----
+ng config cli.packageManager yarn
+----
+
+Now install the required dependencies using Yarn by executing:
+
+----
+yarn install
+----
+
+Now run `vscode-main.bat` to start the VS Code instance for the main workspace and expand the `/jumpthequeue/angular` directory, i.e. the project we have just created. It should look like this:
+
+image::images/devon4ng/3.BuildYourOwn/filesnew.png[Angular New Project Files]
+
+Finally, it's time to check if the created project works properly. To do this, simply run:
+
+----
+ng serve -o
+----
+
+If everything was compiled correctly, you'll see the default Angular 7 landing page:
+
+image::images/devon4ng/3.BuildYourOwn/appnew.png[Angular Default Page]
+
+The `ng serve` command starts the development mode of the Angular/CLI. This means, that everytime you make a change in the code and save it, the project will automatically recompile and run. The `-o` option causes the project to open in your default browser once compiled.
+
+For the next steps we'll have to stop the development mode by pressing `Ctrl + C` and terminating the batch job (*Y*).
+
+=== Adding Google Material and Covalent Teradata
+
+[NOTE]
+====
+We will be using very specific module versions in this tutorial, to ensure that all dependencies are compatible with the legacy Angular 7 project. For this reason we will be appending `@<version>` behind each dependency.
+
+If you create a new project with the _latest_ Angular version on your own later down the line, you can omit this tag. This way, the latest compatible version of a dependency will be downloaded and linked.
+
+For Angular Material this would be for example be done via `npm install @angular/material` or `yarn add @angular/material`.
+====
+
+Go to the `C:/.../workspaces/main/jumpthequeue/angular` directory and run the following command to add *Google Material* to the project dependencies:
+
+----
+yarn add @angular/material@7.1.0
+----
+
+Now we are going to add the *Angular CDK* (Component Dev Kit):
+
+----
+yarn add @angular/cdk@7.1.0
+----
+
+Then we are going to add *Animations*:
+
+----
+yarn add @angular/animations@7.1.0
+----
+
+The Angular animations library implements a domain-specific language (DSL) for defining web animation sequences for HTML elements as multiple transformations over time. Finally, some material components need gestures support, so we need to add this dependency:
+
+----
+yarn add hammerjs@^2.0.8
+----
+
+That is all regarding Angular/Material. We are now going to install *Covalent Teradata* dependency:
+
+----
+yarn add @covalent/core@2.0.0-beta.4
+----
+
+Now that we have downloaded and linked all dependencies, we can check the project's `package.json` file and see if everything has been correctly added (Some of the minor dependencies may have a different versions for you, which is fine. Our main concern are the versions of the modules manually installed in the previous steps.):
+
+[source, json]
+----
+  "dependencies": {
+    "@angular/animations": "7.1.0",
+    "@angular/cdk": "7.1.0",
+    "@angular/common": "~7.1.0",
+    "@angular/compiler": "~7.1.0",
+    "@angular/core": "~7.1.0",
+    "@angular/forms": "~7.1.0",
+    "@angular/material": "7.1.0",
+    "@angular/platform-browser": "~7.1.0",
+    "@angular/platform-browser-dynamic": "~7.1.0",
+    "@angular/router": "~7.1.0",
+    "@covalent/core": "2.0.0-beta.4",
+    "core-js": "^2.5.4",
+    "hammerjs": "^2.0.8",
+    "rxjs": "~6.3.3",
+    "tslib": "^1.9.0",
+    "zone.js": "~0.8.26"
+  }
+----
+
+Angular Material and Covalent need the following modules to work: `CdkTableModule`, `BrowserAnimationsModule` and *every Covalent and Material Module* used in the application. These modules come from `@angular/material`, `@angular/cdk/table`, `@angular/platform-browser/animations` and `@covalent/core`. In future steps a `CoreModule` will be created. This module will contain the imports of these libraries which will avoid code repetition.
+
+Now let's continue to make some config modifications to have all the styles imported to use Material and Teradata:
+
+We will want to add some images to the page: In `assets` create a new folder `images`:
+
+COPY AND PASTE IMAGES AND FONTS
+
+1.- Inside `angular/src` there already is a `styles.scss` file to configure the style of our app. Paste the following content into the file:
+
+[source, scss]
+----
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+@font-face {
+    font-family: 'Ubuntu-R';
+    src: url("/assets/fonts/Ubuntu-R.ttf");
+}
+
+@font-face {
+    font-family: 'Ubuntu-B';
+    src: url("/assets/fonts/Ubuntu-B.ttf");
+}
+
+@font-face {
+    font-family: 'Ubuntu-M';
+    src: url("/assets/fonts/Ubuntu-M.ttf");
+}
+
+* {
+    font-family: 'Ubuntu-R' !important;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    @media (min-width: 320px) and (max-width: 480px) {
+        background: #FFF url('/assets/images/phone_portrait.png') no-repeat;
+        background-size: cover;
+    }
+    @media (min-width: 481px) and (max-width: 767px) {
+        background: #FFF url('/assets/images/tablet_portrait.png') no-repeat;
+        background-size: cover;
+    }
+    @media (min-width: 768px) {
+        background: #FFF url('/assets/images/tablet_landscape.png') no-repeat;
+        background-size: cover;
+    }
+}
+
+body {
+    padding: 25px;
+    box-sizing: border-box;
+}
+----
+
+
+Now we have successfully set up a blank Angular project with Google Material and Covalent Teradata modules. We can continue by adding custom functionality and components to the app.
+
+'''
+*Next Chapter*: link:devon4ng-adding-custom-functionality.asciidoc[Customizing a devon4ng Project]
