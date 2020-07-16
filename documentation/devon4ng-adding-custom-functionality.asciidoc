@@ -199,9 +199,7 @@ You have already learned about Routing in devon4ng https://github.com/devonfw/ju
 You can go back and read that section again to refresh your memory.
 ====
 
-Finally, we remove the code from `app.component.html` and replace it with a `<router-outlet></router-outlet>` tag. The final result of our root component will look like this:
-
-image::images/devon4ng/3.BuildYourOwn/root_router.jpg[Root Router, 250]
+Finally, we remove the code from `app.component.html` and replace it with a `<router-outlet></router-outlet>` tag.
 
 As you can see, now the body content is the HTML of `LoginPageComponent`. This is because we told the Router to redirect to login-page when the path is `/login`, but also, redirect to it by default if any of the other routes match the given path.
 
@@ -572,7 +570,7 @@ To check wether you have done it correctely, launch the backend and the frontend
 
 It sould look like this:
 
-image::images/devon4ng/custom-login/login-page.png[Login Page, 250]
+image::images/devon4ng/custom-login/login-page.png [Login Page, 500]
 
 === Login Component
 
