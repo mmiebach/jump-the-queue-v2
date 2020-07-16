@@ -157,7 +157,7 @@ You can go back and read that section again to refresh your memory.
 
 Once this is done, our app should have a header and "app works!" should appear in the body of the page:
 
-image::images/devon4ng/custom-login/root-header.png[Root Header, 250]
+image::images/devon4ng/custom-login/root-header.png[Root Header, 500]
 
 To go a step further, we have to modify the body of the root component because it should be the *output of the router*. Now it's time to prepare the routing system.
 
@@ -570,7 +570,7 @@ To check wether you have done it correctely, launch the backend and the frontend
 
 It sould look like this:
 
-image::images/devon4ng/custom-login/login-page.png [Login Page, 500]
+image::images/devon4ng/custom-login/login-page.png[Login Page, 500]
 
 === Login Component
 
