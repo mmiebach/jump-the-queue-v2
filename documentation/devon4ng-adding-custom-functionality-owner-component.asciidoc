@@ -148,6 +148,23 @@ import { AuthGuardService } from './core/auth-guard.service';
 ...
 ----
 
+To the `owner-overview-page.component.scss` add 
+
+[source, typescript]
+----
+.owner-overview-page-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .queueLogoContainer {
+        display: flex;
+        justify-content: space-between;
+    }
+    .current-code-label {
+        color: #FFF;
+    }
+}
+----
 
 
 
