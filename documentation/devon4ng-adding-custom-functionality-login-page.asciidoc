@@ -1,0 +1,577 @@
+:toc: macro
+toc::[]
+:idprefix:
+:idseparator: -
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+= devon4j adding the Login-Page
+
+Now we have a fully functional blank project. All we have to do now is to create the components and services which will compose our application.
+
+First, we are going to develop the views of the app through its components, then we will create the services with the logic, security and back-end connection.
+
+
+== Creating Components
+
+[NOTE]
+====
+You have already learned about creating Components in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-components#create-a-new-component[here]. +
+You can go back and read that section again to refresh your memory.
+====
+
+Our app is going to consist of 3 main views:
+
+* Login-Page
+* Owner-overview-page
+* Qr-code-page
+
+To navigate between these views/components, we are going to implement routes using the Angular Router.
+
+To see our progress, move to the root folder of the `angular` project and run `ng serve -o` again. This will recompile and publish our client app to http://localhost:4200. Angular will keep watching for changes, so whenever we modify the code, the app will automatically reload.
+
+=== Root Component
+
+`app.component.ts` inside `angular/src/app` will be our root component, so we don't have to create a new file yet. We are going to add elements to the root component that will be common no matter what view will be displayed.
+
+[NOTE]
+====
+You have already learned about the Root Component in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-components#root-component[here]. +
+You can go back and read that section again to refresh your memory.
+====
+
+This applies to the header element which will be on top of the window and on top of all other components. If you want, you can read more about https://teradata.github.io/covalent/#/layouts[Covalent layouts], which we are going to use a lot from now on, for every view component.
+
+[NOTE]
+====
+You have already learned about Covalent Layouts in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-components#teradata-covalent-layouts[here]. +
+You can go back and read that section again to refresh your memory.
+====
+
+We don't really need anything more than a header, so we are going to use the simplest layout for this purpose; the *nav view*.
+
+In order to be able to use Covalent and Angular Material we are going to create a core module, which we will import into every other module where we want to use Covalent and Angular Material. First, we create a folder called `shared` in the `angular/src/app` directory. Inside there we are going to create a file called `code.module.ts` and will fill it with the following content:
+
+[source, typescript]
+----
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatInputModule, MatButtonModule } from '@angular/material';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+
+
+@NgModule({
+    imports: [
+        MatInputModule,
+        MatButtonModule,
+        FormsModule,
+        HttpClientModule,
+        MatSnackBarModule,
+        BrowserAnimationsModule
+    ],
+    exports: [
+        CommonModule,
+        MatInputModule,
+        MatButtonModule,
+        FormsModule,
+        MatSnackBarModule,
+        BrowserAnimationsModule
+    ],
+    providers: [
+        HttpClientModule,
+    ],
+    declarations: []
+})
+export class CoreModule { }
+
+
+----
+
+[NOTE]
+====
+This `CoreModule` has almost every module of the different components for *Angular Material* and *Covalent Teradata*. If you decide to use a component that is not included yet, you need to add the corresponding module here.
+====
+
+Remember that we need to import this `CoreModule` module into the `AppModule` and inside every module of the different components that use *Angular Material* and *Covalent Teradata*. If a component does not have a module, it will be imported in the `AppModule` and hence automatically have the `CoreModule`. Our `app.module.ts` should have the following content:
+
+We will import a QRCodeModule for later use and the CoreModule we just created. The file should look like this:
+
+[source, typescript]
+----
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { QRCodeModule } from 'angularx-qrcode';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { CoreModule } from './shared/code.module';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    CoreModule,
+    QRCodeModule
+  ],
+  providers: [
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+----
+
+There will now appear an error regarding the QRCodeModule. We will therefore install it by running `yarn add angularx-qrcode`
+
+
+Now we can use this layout, so let's implement it in `app.component.html`. Use the following code:
+
+[source, html]
+----
+<router-outlet>
+        <div td-toolbar-content>
+          Jump The Queue          <!-- Header container-->
+        </div>
+        <h1>
+          app works!              <!-- Main content-->
+        </h1>
+</router-outlet>
+----
+
+[NOTE]
+====
+You have already learned about Toolbars in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-components#toolbars[here]. +
+You can go back and read that section again to refresh your memory.
+====
+
+Once this is done, our app should have a header and "app works!" should appear in the body of the page:
+
+image::images/devon4ng/custom-login/root-header.png[Root Header, 500]
+
+To go a step further, we have to modify the body of the root component because it should be the *output of the router*. Now it's time to prepare the routing system.
+
+First, we need to create a component to show as default which will be our access view. We will modify it later. Stop `ng serve` and run:
+
+----
+ng generate component login-page
+----
+
+It will add a folder to our project with all the files needed for a component. Now we can move on to the router task again. Run `ng serve` again to continue the development.
+
+Let's create a module that navigates between components when the Router checks for routes. The file `app-routing.module.ts` was created automatically when we chose to include Angular Routing during project creation and we only need to modify it now:
+
+We will want the Login Page to be the default page. We therefore redirect to the login page.
+
+[source, typescript]
+----
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+import { LoginPageComponent } from '../app/login-page/login-page.component';
+
+const routes: Routes = [
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginPageComponent },
+  { path: '**', component: LoginPageComponent }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+----
+
+[NOTE]
+====
+You have already learned about Routing in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-components#routing[here]. +
+You can go back and read that section again to refresh your memory.
+====
+
+Finally, we remove the code from `app.component.html` and replace it with a `<router-outlet></router-outlet>` tag.
+
+As you can see, now the body content is the HTML of `LoginPageComponent`. This is because we told the Router to redirect to login-page when the path is `/login`, but also, redirect to it by default if any of the other routes match the given path.
+
+For now we are going to leave the header like this. In the future we will separate it into another component inside a layout folder.
+
+=== LoginForm Component
+
+As we have already created this component from the section before, let's move on to building the template of the login view.
+
+First we want to have a theme for our login-page. We will therefore modify the `login-page.components.scss`:
+
+[source, css]
+----
+.login-page-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .welcome-container {
+        flex: 3;
+        text-align: center;
+        .welcome-message {
+            display: inline-block;
+            padding-top: 25px;
+            font-size: 53px;
+            color: #FFF;
+        }
+    }
+    .form-container {
+        flex: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        .fields {
+            max-width: 300px;
+        }
+    }
+    .button-container {
+        flex: 4;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        .button-login {
+            width: 150px;
+            background-color: #0C75B1;
+            border-color: #0C75B1;
+            border-radius: 30px;
+        }
+    }
+}
+----
+
+Second we want to have fields with for the username and password. In the `login-page.components.ts`We will hve:
+
+[source, typescript]
+----
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-login-page',
+  templateUrl: './login-page.component.html',
+  styleUrls: ['./login-page.component.scss']
+})
+export class LoginPageComponent implements OnInit {
+
+  public username: string;
+  public password: string;
+  constructor() { }
+
+  ngOnInit() {
+    this.username = 'adcenter';
+    this.password = 'adcenter';
+  }
+
+  onLogout() {
+    this.onLogout();
+  }
+}
+----
+
+The default username and password will be 'adcenter'.
+
+
+Second, we need to add the Covalent Layout and the card to the file `login-page.component.html`:
+
+[source, html]
+----
+<div class="login-page-container">
+    <div class="welcome-container">
+        <span class="welcome-message">WELCOME</span>
+    </div>
+    <div class="form-container">
+        <mat-form-field class="fields">
+            <input matInput type="text" placeholder="username" [(ngModel)]="username">
+        </mat-form-field>
+        <mat-form-field class="fields">
+            <input matInput type="password" placeholder="password" [(ngModel)]="password">
+        </mat-form-field>
+    </div>
+</div>
+----
+
+Now we will want to add a login-button to our login-page. In the Backend part we already implemented the logic to to be able to access the username and password in the database. 
+We want the login-button to access the backend and check if a given username-password-tuple correspond to one in the database. We will therefor implement a login-service that does this:
+In `src/app/login-page` create a new folder called `services`. In `services` create two files `login.service.spec.ts` and `login.service.ts`.
+`login.service.spec.ts` should contain:
+
+[source, typescript]
+----
+
+import { TestBed } from '@angular/core/testing';
+
+import { LoginService } from './login.service';
+
+describe('LoginService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
+
+  it('should be created', () => {
+    const service: LoginService = TestBed.get(LoginService);
+    expect(service).toBeTruthy();
+  });
+});
+----
+
+`login.service.ts` should contain:
+
+[source, typescript]
+----
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material';
+import { map } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
+
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class LoginService {
+
+  private baseUrl = environment.baseUrlRestServices;
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    public snackBar: MatSnackBar
+  ) { }
+
+}
+
+----
+
+In the next steps we will add the login and the logout function:
+
+There will be an error regarding the baseUrlRestServices. We will terefore change the `environments.ts` in `src/environments`:
+
+[source,typescript]
+----
+const hostname = window.location.hostname;
+
+export const environment = {
+  production: false,
+  baseUrlRestServices: 'http://' + hostname + ':8081/jumpthequeue/services/rest/',
+  qrUrl: 'http://' + hostname + ':4200/my-code',
+  streamUrl: 'http://' + hostname + ':8081/stream/subscribe',
+  localStorageUuidKey: 'jtquuid'
+};
+----
+
+This will link the frontend to the backend we already finished.
+
+Now we want to create a login-button, that checks wether the inserted username and password is saved in the database.
+
+We will therefore create an authentification service: In the `app`-folder create a folder called `core`. In this folder create `auth.service.ts` and auth.service.spec.ts`.
+
+`auth.service.ts` should contain the following:
+
+[source, typescript]
+----
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private username: string;
+  private logged = false;
+
+  constructor() { }
+
+  public isLogged(): boolean {
+    return this.logged;
+  }
+
+  public setLogged(login: boolean): void {
+    this.logged = login;
+  }
+
+  public getUsername(): string {
+    return this.username;
+  }
+
+  public setUsername(username: string) {
+    this.username = username;
+  }
+
+}
+----
+
+This file contains methods for getting and setting the username and checking if a user is logged.
+
+`auth.service.spec.ts` should contain
+
+[source, typescript]
+----
+import { TestBed } from '@angular/core/testing';
+
+import { AuthService } from './auth.service';
+
+describe('AuthService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
+
+  it('should be created', () => {
+    const service: AuthService = TestBed.get(AuthService);
+    expect(service).toBeTruthy();
+  });
+});
+----
+
+We will also need to export the structure of the Owner class. This is done by creating a file `backendModels` in `app/shared`. Here we will create a new file called `interfaces.ts`.
+
+For the time being we will only add the owner class to this file:
+
+[source, typescript]
+
+----
+
+export class Owner {
+    id: number;
+    modificationCounter: number;
+    username: string;
+    password: string;
+    userType: boolean;
+}
+----
+
+
+Now we are able to implement the login-button. In the `login.service.ts` we will now implement the login and logout methods. But first we need to import the needed files we created:
+
+[source, typescript]
+----
+import { Owner } from 'src/app/shared/backendModels/interfaces';
+import { AuthService } from '../../core/auth.service';
+
+----
+
+Now we will implement the login and logout methods in `login.service.ts`:
+
+[source, typescript]
+----
+  login(username: string, password: string) {
+    const payload = {
+      username,
+      password,
+      pageable: {
+        pageNumber: 0,
+        pageSize: 1,
+	sort: [{direction: 'ASC',
+                property: 'username',
+                ignoreCase: false,
+                nullHandling: 'NATIVE',
+                ascending: true}]
+      }
+    };
+
+    this.http.post<Owner>(this.baseUrl + 'ownermanagement/v1/owner/search', payload).pipe(
+      map(res => res['content'][0])
+    ).subscribe(
+      (owner: Owner) => {
+        if (owner && owner.username === username && owner.password === password && owner.userType) {
+          this.authService.setLogged(true);
+          this.router.navigate(['owner']);
+        } else {
+          this.authService.setLogged(false);
+          this.snackBar.open('Incorrect credentials', 'OK', {
+            duration: 2000,
+          });
+        }
+      },
+      err => {
+        this.snackBar.open('Server error', 'OK', {
+          duration: 2000,
+        });
+      }
+    );
+  }
+
+  logout(): void {
+    this.authService.setLogged(false);
+    this.router.navigate(['login']);
+  }
+
+----
+
+There will be errors regarding auth-service. We will therefor include aut service in the constructor. The constructor should look like this:
+
+[source, typescript]
+----
+  private baseUrl = environment.baseUrlRestServices;
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private http: HttpClient,
+    public snackBar: MatSnackBar
+  ) { }
+----
+
+We will now add these methods to the `login-page.component.ts`-file. We therefore have to import the LoginService, add the LoginService to the constructor and define the methods for the login-page.
+
+`login-page.component.ts` should now look like this:
+
+[source, typescript]
+----
+import { Component, OnInit } from '@angular/core';
+import { LoginService } from './services/login.service';
+
+@Component({
+  selector: 'app-login-page',
+  templateUrl: './login-page.component.html',
+  styleUrls: ['./login-page.component.scss']
+})
+export class LoginPageComponent implements OnInit {
+
+  public username: string;
+  public password: string;
+  constructor(private loginService: LoginService) { }
+
+  ngOnInit() {
+    this.username = 'adcenter';
+    this.password = 'adcenter';
+  }
+
+  onLogin() {
+    this.loginService.login(this.username, this.password);
+  }
+
+  onLogout() {
+    this.onLogout();
+  }
+}
+
+
+----
+
+We will now add the login-button to the html-file, so that the login-button will appear in our page.
+In the `login-page.component.html` we will add the login-button.
+
+[source, html]
+----
+...
+<div class="button-container">
+        <button class="button-login" mat-raised-button (click)="onLogin()">Login</button>
+    </div>
+...
+----
+
+To check wether you have done it correctely, launch the backend and the frontend simultaneously (run SpringBootApp in Ecipse and `ng serve -o` in VSCode). 
+
+It sould look like this:
+
+image::images/devon4ng/custom-login/login-page.png[Login Page, 500]
+
+However, when clicking on the login-button there will be no change (except the url). We will therefore have to add the Owner-Component.
+ 
+*Next Chapter*: link:devon4ng-adding-custom-functionality-owner-component.asciidoc[Adding the Owner-Component]
