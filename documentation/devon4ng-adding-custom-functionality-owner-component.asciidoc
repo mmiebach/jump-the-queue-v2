@@ -52,7 +52,7 @@ import { LoginService } from '../login-page/services/login.service';
   styleUrls: ['./owner-overview-page.component.scss']
 })
 
-export class OwnerOverviewPageComponent implements OnInit, OnDestroy {
+export class OwnerOverviewPageComponent implements OnInit {
   private queueSub: Subscription;
   private codeSub: Subscription;
 
@@ -63,10 +63,6 @@ export class OwnerOverviewPageComponent implements OnInit, OnDestroy {
   ngOnInit() {
   }
 
-  ngOnDestroy() {
-    this.queueSub.unsubscribe();
-    this.codeSub.unsubscribe();
-  }
 
 }
 
@@ -81,7 +77,28 @@ We will now use the Login component to add a logout button. In `owner-overview-p
   }
 ----
 
-Now we have a logout-button. However we are not redirected to the Login-page. We will therefore create a service that will do this for us. In `app/core` add the files `auth-guard.service.spec.ts` and `auth-guard.service.ts`.
+This Method will use the logout function, that we already defined in the Login-Page. 
+
+Now we will add some style to the `owner-overview-page`.To the `owner-overview-page.component.scss` add 
+
+[source, typescript]
+----
+.owner-overview-page-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .queueLogoContainer {
+        display: flex;
+        justify-content: space-between;
+    }
+    .current-code-label {
+        color: #FFF;
+    }
+}
+----
+
+
+We will now add an `auth-guard` service, that will redirect a user to the login-page, when not logged in. In `app/core` create two files: `auth-guard.service.spec.ts` and `auth-guard.service.ts`.
 
 In the `auth-guard.service.spec.ts` copy and paste the following code:
 
@@ -148,788 +165,39 @@ import { AuthGuardService } from './core/auth-guard.service';
 ...
 ----
 
-To the `owner-overview-page.component.scss` add 
+
+Now we are going to add some services to access the backend. Create a folder in `app/shared` called `services`.
+
+First we are going to create a service that will access the accesscode. In `app/shared/services` add the files `access-code.service.ts` and `access-code.service.spec.ts`.
+
+In `access-code.service.spec.ts` copy and paste the following code:
 
 [source, typescript]
 ----
-.owner-overview-page-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    .queueLogoContainer {
-        display: flex;
-        justify-content: space-between;
-    }
-    .current-code-label {
-        color: #FFF;
-    }
-}
-----
+import { TestBed } from '@angular/core/testing';
 
+import { AccessCodeService } from './access-code.service';
 
+describe('AccessCodeService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
 
-This will create our component so we can start working on it. Turning back to `login.component.html` we have to modify these lines of code:
-
-[source, html]
-----
-<form (ngSubmit)="submitLogin()" #loginForm="ngForm" layout-padding>
-... 
-<button mat-raised-button type="submit" [disabled]="!loginForm.form.valid">Login</button>
-...       
-<button mat-raised-button (click)="onRegisterClick()" color="primary">Register</button>
-----
-
-Two events were added. First, when we submit the form, the method `submitLogin()` is going to be called. Second, when the user clicks the button `(click)` will send an event to the function `onRegisterClick()`. This function should be inside `login.component.ts` which is going to be created now:
-
-[source, typescript]
-----
-  ...
-  import { Router } from '@angular/router';
-  ...
-  constructor(private router: Router) { }
-  ...
-  onRegisterClick(): void {
-    this.router.navigate(['Register']);
-  }
-
-  submitLogin(): void {
-  }
-----
-
-We need to inject an instance of the Router object and declare it with the name _router_ in order to use it in the code, as we did with `onRegisterClick()`. Doing this will use the navigate function and redirect to the next view. In our case, it will redirect using the route we are going to define in `app.routing.module.ts`:
-
-[source, typescript]
-----
-...
-import { RegisterComponent } from './register/register.component';
-...
-const appRoutes: Routes = [
-  { path: 'FormLogin', component: FormLoginComponent},          // Redirect if url path is /FormLogin.
-  { path: 'Register', component: RegisterComponent},            // Redirect if url path is /Register.
-  { path: '**', redirectTo: '/FormLogin', pathMatch: 'full' }   // Redirect if url path do not match any other route.
-];
-...
-----
-
-[NOTE]
-====
-You have already learned about Dependency Injection in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-services#dependency-injection[here]. +
-You can go back and read that section again to refresh your memory.
-====
-
-Now we are going to imitate the `login` to shape our `register.component.html`:
-
-[source, html]
-----
-<form layout-padding (ngSubmit)="submitRegister()" #registerForm="ngForm">
-  <div layout="row" flex>
-      <mat-form-field flex>
-        <input matInput placeholder="Email" ngModel email name="username" required>
-      </mat-form-field>
-  </div>
-  <div layout="row" flex>
-      <mat-form-field flex>
-        <input matInput placeholder="Password" ngModel name="password" type="password" required>
-      </mat-form-field>
-  </div>
-  <div layout="row" flex>
-      <mat-form-field flex>
-        <input matInput placeholder="Name" ngModel name="name" required>
-      </mat-form-field>
-  </div>
-  <div layout="row" flex>
-      <mat-form-field flex>
-        <input matInput placeholder="Phone Number" ngModel name="phoneNumber" required>
-      </mat-form-field>
-  </div>
-  <div layout-xs="row" flex>
-      <div layout="column" flex>
-        <mat-checkbox name="acceptedTerms" ngModel required>Accept Terms And conditions</mat-checkbox>
-      </div>
-  </div>
-  <div layout-xs="row" flex>
-      <div layout="column" flex>
-        <mat-checkbox name="acceptedCommercial" ngModel required>I want to receive notifications</mat-checkbox>
-      </div>
-  </div>
-  <div layout="row" flex>
-  </div>
-  <div layout="row" flex>
-      <div layout="column" flex="10">
-        </div>
-      <div layout="column" flex>
-          <button mat-raised-button type="submit" [disabled]="!registerForm.form.valid">Register</button>
-      </div>
-      <div layout="column" flex="10">
-      </div>
-  </div>
-</form>
-----
-
-Now that we have a minimum of navigation flow inside our application, we are going to generate our first service using the command:
+  it('should be created', () => {
+    const service: AccessCodeService = TestBed.get(AccessCodeService);
+    expect(service).toBeTruthy();
+  });
+});
 
 ----
-ng generate service register/services/register
-----
 
-This will create a folder "services" inside "register" and create the service itself. Services are where we keep the logic that connects to our database and fetches data which is going to be used by our `component.ts`.
-
-In order to use the service, we are going to create some interface models. Let's create a folder called `backendModels` inside "shared" and inside this folder a file called `interfaces.ts` in which we are going to add the model interfaces that will match our backend:
-
-[source, typescript]
-----
-export class Visitor {
-    id?: number;
-    username: string;
-    name: string;
-    password: string;
-    phoneNumber: string;
-    acceptedCommercial: boolean;
-    acceptedTerms: boolean;
-    userType: boolean;
-}
-----
-
-[NOTE]
-====
-You have already learned about creating new services in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-services#create-a-new-service[here]. +
-You can go back and read that section again to refresh your memory.
-====
-
-If we take a closer look, we can see that id has a `?` behind it. This indicates that the id is optional.
-
-[NOTE]
-====
-At this point we are going to assume that you have finished the https://github.com/devonfw/jump-the-queue/wiki/build-devon4j-application[devon4j] part of this tutorial, or have at least downloaded the project and have the back end running locally on http://localhost:8081.
-====
-
-After doing this, we are going to add an environment variable with our base-URL for the REST services. This way we won't have to change every URL when we switch to production. Inside `environments/environment.ts` we add:
-
-[source, typescript]
-----
-export const environment: {production: boolean, baseUrlRestServices: string} = {
-  production: false,
-  baseUrlRestServices: 'http://localhost:8081/jumpthequeue/services/rest'
-};
-----
-
-Now in the service, we are going to add a `registerVisitor` method.
-
-To call the server in this method we are going to inject the Angular `HttpClient` class from `@angular/common/http`. This class is the standard used by Angular to perform HTTP calls. The register call demands a `Visitor` model which we created in the `interfaces` file. We are going to build a POST call and send the information to the proper URL of the server service. The call will return an observable:
+In `access-code.service.ts` add the following code:
 
 [source, typescript]
 ----
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Visitor} from 'src/app/shared/backendModels/interfaces';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class RegisterService {
-
-  private baseUrl = environment.baseUrlRestServices;
-
-  constructor(private http: HttpClient) { }
-
-  registerVisitor(visitor: Visitor): Observable<Visitor> {
-    return this.http.post<Visitor>(`${this.baseUrl}` + '/visitormanagement/v1/visitor', visitor);
-  }
-}
-----
-
-This method will send our model to the backend and return an Observable that we will use on the `component.ts`.
-
-[NOTE]
-====
-You have already learned about Observables and RxJs in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-services#server-communication[here]. +
-You can go back and read that section again to refresh your memory.
-====
-
-Now we are going to modify `register.component.ts` to call this service:
-
-[source, typescript]
-----
-import { Component, OnInit } from '@angular/core';
-import { RegisterService } from './services/register.service';
-import { Visitor } from '../shared/backendModels/interfaces';
-import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
-
-@Component({
-  selector: 'app-register',
-  templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss']
-})
-export class RegisterComponent implements OnInit {
-
-  constructor(private registerService: RegisterService, private router: Router, public snackBar: MatSnackBar) { }
-
-  submitRegister(formValue): void {
-    const visitor: Visitor = new Visitor();
-    visitor.username = formValue.username;
-    visitor.name = formValue.name;
-    visitor.phoneNumber = formValue.phoneNumber;
-    visitor.password = formValue.password;
-    visitor.acceptedCommercial = formValue.acceptedCommercial;
-    visitor.acceptedTerms = formValue.acceptedTerms;
-    visitor.userType = false;
-
-    this.registerService.registerVisitor(visitor).subscribe(
-      (visitorResult: Visitor) => console.log(JSON.stringify(visitorResult)), // When call is received
-      (err) =>  this.snackBar.open(err.error.message, 'OK', {
-        duration: 5000,
-      }), // When theres an error
-    );
-  }
-
-  ngOnInit() {
-  }
-}
-----
-
-In this file we injected `RegisterService` and `Router` to use them. Then, inside the method `submitRegister`, we created a visitor that we are going to pass to the service. We called the service method `registerVisitor`, we passed the visitor and we subscribed to the `Observable<Visitor>`, which we returned from the service. This subscription allows us to control three things:
-
-. What to do when the data is received.
-
-. What to do when there's an error.
-
-. What to do when the call is complete.
-
-Finally, we modify the `register.component.html` to send the form values to the method:
-
-[source, html]
-----
-...
-<form layout-padding (ngSubmit)="submitRegister(registerForm.form.value)" #registerForm="ngForm">
-...
-----
-
-image::images/devon4ng/3.BuildYourOwn/register.png[Register Page, 250]
-
-Using the method and taking a look at the browser console, we should see the visitor model being returned.
-
-== Creating Services
-
-Now that we registered a `Visitor`, it's time to create 3 important services:
-
-- AuthService
-- AuthGuardService
-- LoginService
-
-The `AuthService` will be the one that contains the login info, the `AuthGuardService` will check if a user is authorized to use a component (via the `canActivate` method), and the `LoginService` will be used to fill the `AuthService`.
-
-[NOTE]
-====
-To keep this tutorial simple, we are going to perform the password check client side. *THIS IS NOT CORRECT!* Usually, you would send the username and password to the backend, check that the values are correct, and create a corresponding token which you would pass in the header and use it inside the `AuthService` -- checking with some interceptors that the token is both in the `AuthService` and in the request.
-====
-
-=== Login, Auth and AuthGuard Services
-
-We are going to create the 3 services via `ng generate service <path>`:
-
-. `LoginService` via: +
-`ng generate service form-login/components/login/services/login`
-
-. `Auth` service via: +
-`ng generate service core/authentication/auth`
-
-. `AuthGuard` service via: +
-`ng generate service core/authentication/auth-guard`
-
-After generating the services, we are going to start modyfing the interfaces. Inside `angular/src/app/shared/backendModels/interfaces` we are going to add `Role`, `FilterVisitor`, `Pageable` and a `Sort` interface:
-
-[source, typescript]
-----
-...
-export class FilterVisitor {
-    pageable: Pageable;
-    username?: string;
-    password?: string;
-}
-
-export class Pageable {
-    pageSize: number;
-    pageNumber: number;
-    sort?: Sort[];
-}
-
-export class Sort {
-    property: string;
-    direction: string;
-}
-
-export class Role {
-    name: string;
-    permission: number;
-}
-----
-
-[NOTE]
-====
-As you can see, we added a `Pageable`, since a lot of the search methods in the backend are using `SearchCriterias`. These need pageables which specify a `paseSize` and `pageNumber`. Also, we can see that in this case `FilterVisitor` uses a pageable and adds parameters as a filter (`username` and `password`), which are optional.
-====
-
-Then we are going to create a `config.ts` file inside the root (`angular/app`). We are going to use that file to set up default config variables, for example: role names with their permission number, default pagination settings etc. For now we are just adding the roles:
-
-[source, typescript]
-----
-export const config: any = {
-    roles: [
-        { name: 'VISITOR', permission: 0 },
-        { name: 'BOSS', permission: 1 },
-    ],
-};
-----
-
-After that, we are going to modify the `auth.service.ts`:
-
-[source, typescript]
-----
-import { Injectable } from '@angular/core';
-import { find } from 'lodash';
-import { Role } from 'src/app/shared/backendModels/interfaces';
-import { config } from 'src/app/config';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private logged = false;
-  private user = '';
-  private userId = 0;
-  private currentRole = 'NONE';
-  private token: string;
-
-  public isLogged(): boolean {
-    return this.logged;
-  }
-
-  public setLogged(login: boolean): void {
-    this.logged = login;
-  }
-
-  public getUser(): string {
-    return this.user;
-  }
-
-  public setUser(username: string): void {
-    this.user = username;
-  }
-
-  public getUserId(): number {
-    return this.userId;
-  }
-
-  public setUserId(userId: number): void {
-    this.userId = userId;
-  }
-
-  public getToken(): string {
-    return this.token;
-  }
-
-  public setToken(token: string): void {
-    this.token = token;
-  }
-
-  public setRole(role: string): void {
-    this.currentRole = role;
-  }
-
-  public getPermission(roleName: string): number {
-    const role: Role = <Role>find(config.roles, { name: roleName });
-    return role.permission;
-  }
-
-  public isPermited(userRole: string): boolean {
-    return (
-      this.getPermission(this.currentRole) === this.getPermission(userRole)
-    );
-  }
-}
-----
-
-We will use this service to fill it with information from the logged-in user once the user logs in. This will allow us to check the information of the logged-in user in any way necessary.
-
-[NOTE]
-====
-You have already learned about Authentication in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-services#authentication[here]. +
-You can go back and read that section again to refresh your memory.
-====
-
-Now we are going to use this class to fill the `auth-guard.service.ts`:
-
-[source, typescript]
-----
-import { Injectable } from '@angular/core';
-import {
-  CanActivate,
-  Router,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
-import { AuthService } from './auth.service';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthGuardService implements CanActivate {
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-  ) {}
-
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot,
-  ): boolean {
-    if (this.authService.isLogged() && this.authService.isPermited('VISITOR')) { // If its logged in and its role is visitor
-      return true;
-    }
-
-    if (!this.authService.isLogged()) { // if its not logged in
-      console.log('Error login');
-    }
-
-    if (this.router.url === '/') {  // if the router is the app route
-      this.router.navigate(['/login']);
-    }
-    return false;
-  }
-}
-----
-
-This service will be slightly different because we have to implement an interface called `CanActivate`. It has a method called `canActivate()` returning a boolean. This method will be called when navigating to a specified route, and -- depending on the return value of this implemented method -- the navigation will proceed or be rejected.
-
-[NOTE]
-====
-You have already learned about Guards in devon4ng https://github.com/devonfw/jump-the-queue/wiki/devon4ng-services#guards[here]. +
-You can go back and read that section again to refresh your memory.
-====
-
-Once this is done, the last step is to fill the `login.service.ts`. In this case, there's going to be three methods:
-
-. `getVisitorByUsername(username: string)`: +
-A method that recovers a single user corresponding to the email.
-
-. `login(username: string, password: string)`: +
-A method, which is going to use the previous method, to check that the username and password match the form input and then fill the `AuthService`.
-
-. `logout()`: +
-This is going to be used to reset the `AuthService` and log out the user.
-
-Also, we see the first use of `pipe` and `map`: +
-`pipe` allows us to execute a chain of functions, then `map` allows us to return the single visitor instead of all the parameters that the server will send us.
-
-[source, typescript]
-----
-import { map, tap } from 'rxjs/operators';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Visitor, FilterVisitor, Pageable } from 'src/app/shared/backendModels/interfaces';
-import { HttpClient } from '@angular/common/http';
-import { environment } from 'src/environments/environment';
-import { AuthService } from 'src/app/core/authentication/auth.service';
-import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class LoginService {
-
-    private baseUrl = environment.baseUrlRestServices;
-    constructor(private router: Router, private http: HttpClient, private authService: AuthService, public snackBar: MatSnackBar) { }
-
-    getVisitorByUsername(username: string): Observable<Visitor> {
-        const filters: FilterVisitor = new FilterVisitor();
-        const pageable: Pageable = new Pageable();
-
-        pageable.pageNumber = 0;
-        pageable.pageSize = 1;
-        filters.username = username;
-        filters.pageable = pageable;
-        return this.http.post<Visitor>(`${this.baseUrl}` + '/visitormanagement/v1/visitor/search', filters)
-       .pipe(
-            map(visitors => visitors['content'][0]),
-        );
-    }
-
-    login(username: string, password: string): void {
-      // Checks if given username and password are the ones aved in the database
-      this.getVisitorByUsername(username).subscribe(
-          (visitorFound) => {
-              if (visitorFound.username === username && visitorFound.password === password) {
-                  this.authService.setUserId(visitorFound.id);
-                  this.authService.setLogged(true);
-                  this.authService.setUser(visitorFound.username);
-                  if (visitorFound.userType === false) {
-                      this.authService.setRole('VISITOR');
-                      this.router.navigate(['ViewQueue']);
-                  } else {
-                      this.authService.setLogged(false);
-                      this.snackBar.open('access error', 'OK', {
-                          duration: 2000,
-                        });
-                  }
-              } else {
-                  this.snackBar.open('access error', 'OK', {
-                      duration: 2000,
-                    });
-              }
-          },
-          (err: any) => {
-            this.snackBar.open('access error', 'OK', {
-              duration: 2000,
-            });
-          },
-      );
-    }
-
-    logout(): void {
-        this.authService.setLogged(false);
-        this.authService.setUser('');
-        this.authService.setUserId(0);
-        this.router.navigate(['FormLogin']);
-    }
-}
-----
-
-If you remember the devon4j tutorial, we used `Criteria` in order to filter and to search the DB. The `Criteria` require a pageable and you can add extra parameters to get specific results. In `getVisitorByUsername()` you can see the creation of a `FilterVisitor` corresponding to the `Criteria` in the backend. This `FilterVisitor` gets a `Pageable` and a `username` and will return a single result as soon as the POST call is performed. That's why we return the first page and only a single result.
-
-[NOTE]
-====
-For the tutorial we are only considering the visitor side of the application. That's why we `setLogged(false)` if it's `userType === true` (BOSS side).
-====
-
-Then we add to the `login-module.ts` and `LoginService`:
-
-[source, typescript]
-----
-...
-import { LoginService } from './services/login.service';
-
-@NgModule({
-  ...
-  providers: [LoginService],
-  ...
-})
-...
-----
-
-After that, we are going to add the `AuthGuard` and the `Auth` into the `shared/core-module.ts`. This will allow us to employ these two services when importing the core module avoiding having to provide these services in every component:
-
-[source, typescript]
-----
-...
-  providers: [
-    HttpClientModule,
-    AuthService,
-    AuthGuardService,
-  ],
-...
-----
-
-You need to import these modules as well, as shown earlier.
-
-Finally, we modify the `login.component.html` to send the form values to the `login.component.ts` like we did with the register form. Afterwards, we are going to modify the `register.components.ts`: When the visitor registers, we can log him in automatically to avoid any nuisances. Let's start with the `login.component.html`:
-
-[source, html]
-----
-...
-<form (ngSubmit)="submitLogin(loginForm.form.value)" #loginForm="ngForm" layout-padding>
-...
-----
-
-As you can see, in the form we just added, the values to the `ngSubmit` allow us to call the method `submitLogin()` within the logic, sending the `loginForm.form.values` which are the form's input values. In the next step we are going to modify the `login.components.ts`, adding the `submitLogin()` method. This method calls the `LoginService`, providing the service with the necessary values received from the form (i.e. the `loginFormValues`).
-
-[source, typescript]
-----
-...
-import { LoginService } from './services/login.service';
-...
-export class LoginComponent implements OnInit {
-  ...
-  constructor(private router: Router, private loginService: LoginService) {
-  }
-  ...
-  submitLogin(loginFormValues): void {
-    this.loginService.login(loginFormValues.username, loginFormValues.password);
-  }
-}
-----
-
-Finally, in the `register.components.ts` we are going to inject the `LoginService` and use it to login the visitor after registering him. This will also send the user to the `ViewQueue`, which we will create and secure later in the tutorial.
-
-[source, typescript]
-----
-import { LoginService } from '../form-login/components/login/services/login.service';
-...
-constructor(private registerService: RegisterService, private router: Router, public snackBar: MatSnackBar,
-    private loginService: LoginService) { } 
-...
-  submitRegister(formValue): void {
-    ...
-    this.registerService.registerVisitor(visitor).subscribe(
-      (visitorResult: Visitor) => {
-        this.loginService.login(visitorResult.username, visitorResult.password);
-      },
-      ...
-    );
-  }
-...
-----
-
-== Finishing Touches
-
-Now we only need to generate two more components (`header` and `view-queue`) and services (`AccessCodeService` and `QueueService`) in order to finish the implementation of our _JumpTheQueue_ app.
-
-=== Separating Header from Layout
-
-By separating the header on top of the page from the layout, we enable the reuse of this component and reach a better separation of concerns across our application. To do this, we are going to generate a new component inside `angular/src/app/layout/header` via:
-
-----
-ng generate component layout/header
-----
-
-Now we are going to add it to the main view `app.component.html`:
-
-[source, html]
-----
-...
-  <div td-toolbar-content flex>
-    <app-header layout-align="center center" layout="row" flex></app-header>
-  </div> <!-- Header container-->
-...
-----
-
-After adding the component to the header view (`app-header`), we are going to modify the HTML of the component (`header.component.html`) and the logic of the component (`header.component.ts`). As a first step, we are going to modify the HTML, adding an icon as a button, which checks whether or not the user is logged in via `*ngIf` by calling the auth service's `isLogged()` method. This will make the icon appear only if the user is logged in:
-
-[source, html]
-----
-Jump The Queue
-<span flex></span> 
-<button mat-icon-button mdTooltip="Log out" (click)=onClickLogout() *ngIf="authService.isLogged()">
-  <mat-icon>exit_to_app</mat-icon>
-</button>
-----
-
-In the header logic (`header.component.ts`) we are simply going to inject the `AuthService` and `LoginService`, then we are going call `logout()` from `LoginService` in the `OnClickLogout()`. Finally, the `AuthService` is needed because it's being used by the HTML template to control if the user is logged in with `isLogged()`:
-
-[source, typescript]
-----
-...
-  constructor(private authService: AuthService, private loginService: LoginService) { }
-...
-  onClickLogout(): void {
-    this.loginService.logout();
-  }
-...
-----
-
-Separating components will allow us to keep the code clean and easy to work with.
-
-=== ViewQueue Component
-
-For the last view, we are going to learn how to use our Observables on the HTML template directly without having to `subscribe()` to them.
-
-First, we are going to generate the component via:
-
-----
-ng generate component view-queue
-----
-
-After that, we are going to include the component in the `app-routing.module.ts`, also adding the guard, to only allow users that are `VISITOR` to see the component. It is important to insert the following code before `{ path: '**', redirectTo: '/FormLogin', pathMatch: 'full' }`:
-
-[source, typescript]
-----
-...
-const appRoutes: Routes = [
-  ...
-  { path: 'ViewQueue',
-    component: ViewQueueComponent,
-    canActivate: [AuthGuardService]}, // Redirect if url path is /ViewQueue, check if canActivate() with the AuthGuardService.
-  ...
-];
-...
-----
-
-Now in order to make this view work, we are going to do these things:
-  
-. Add the `Queue` and `AccessCode` interface in our `angular/src/app/shared/backendModels/interfaces` and their corresponding filters.
-
-. Generate the `QueueService` and `AccessCodeService` and add the necessary methods.
-
-. Modify the `view-queue.component.html`.
-
-. Modify the logic of the component `view-queue.component.ts`.
-
-First, we are going to add the necessary interfaces. We modify `angular/src/app/shared/backendModels/interfaces.ts` and add the `FilterQueue`, `Queue`, `FilterAccessCode` and `AccessCode`. These are going to be necessary in order to communicate with the backend.
-
-[source, typescript]
-----
-...
-export class FilterAccessCode {
-    pageable: Pageable;
-    visitorId?: Number;
-    endTime?: string;
-}
-
-export class FilterQueue {
-    pageable: Pageable;
-    active: boolean;
-}
-
-export class AccessCode {
-    id?: number;
-    ticketNumber: string;
-    creationTime: string;
-    startTime?: string;
-    endTime?: string;
-    visitorId: number;
-    queueId: number;
-}
-
-export class Queue {
-    id?: number;
-    name: string;
-    logo: string;
-    currentNumber: string;
-    attentionTime: string;
-    minAttentionTime: string;
-    active: boolean;
-    customers: number;
-}
-...
-----
-
-=== AccessCode and Queue Services
-
-After this is done, we are going to generate the `AccessCodeService` and the `QueueService`:
-
-----
-ng generate service view-queue/services/Queue
-
-ng generate service view-queue/services/AccessCode
-----
-
-Once this is done, we are going to modify them and add the necessary methods: 
-
-- For the `AccessCodeService` we are going to need a full CRUD:
-
-[source, typescript]
-----
-import { Injectable } from '@angular/core';
-import { AuthService } from 'src/app/core/authentication/auth.service';
-import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { AccessCode, Pageable, FilterAccessCode } from 'src/app/shared/backendModels/interfaces';
-import { Observable } from 'rxjs';
-import { environment } from 'src/environments/environment';
-import { map } from 'rxjs/operators';
+import { AccessCode, EstimatedTime, NextCodeCto, RemainingCodes } from './../backendModels/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -938,80 +206,127 @@ export class AccessCodeService {
 
   private baseUrl = environment.baseUrlRestServices;
 
-  constructor(private router: Router, private http: HttpClient, private authService: AuthService) { }
+  constructor(private http: HttpClient) { }
 
-  getCurrentlyAttendedAccessCode(): Observable<AccessCode> {
-    const filters: FilterAccessCode = new FilterAccessCode();
-    const pageable: Pageable = new Pageable();
-
-    filters.endTime = null;
-    pageable.pageNumber = 0;
-    pageable.pageSize = 1;
-    filters.pageable = pageable;
-    return this.http.post<AccessCode>(`${this.baseUrl}` + '/accesscodemanagement/v1/accesscode/cto/search', filters)
-    .pipe(
-        map(accesscodes => {
-          if (!accesscodes['content'][0]) {  // if theres no response it means theres noone in the queue
-            return null;
-          } else {
-            if (accesscodes['content'][0]['accessCode'].startTime != null) {
-              // if start time is not null it means that hes being attended
-              return accesscodes['content'][0]['accessCode'];
-            } else {
-              // noone being attended
-              return null;
-            }
-          }
-        }),
-     );
+  getCurrentCode(): Observable<AccessCode> {
+    return this.http.post<AccessCode>(this.baseUrl + 'accesscodemanagement/v1/accesscode/current', {});
   }
 
-  getVisitorAccessCode(visitorId: number): Observable<AccessCode> {
-    const filters: FilterAccessCode = new FilterAccessCode();
-    const pageable: Pageable = new Pageable();
-
-    pageable.pageNumber = 0;
-    pageable.pageSize = 1;
-    filters.visitorId = visitorId;
-    filters.pageable = pageable;
-    return this.http.post<AccessCode>(`${this.baseUrl}` + '/accesscodemanagement/v1/accesscode/cto/search', filters)
-    .pipe(
-      map(accesscodes => {
-        if (accesscodes['content'][0]) {
-          return accesscodes['content'][0]['accessCode'];
-        } else {
-          return null;
-        }
-      }),
-     );
+  callNextCode(): Observable<NextCodeCto> {
+    return this.http.post<NextCodeCto>(this.baseUrl + 'accesscodemanagement/v1/accesscode/next', {});
   }
 
-  deleteAccessCode(codeAccessId: number) {
-    this.http.delete<AccessCode>(`${this.baseUrl}` + '/accesscodemanagement/v1/accesscode/' + codeAccessId + '/').subscribe();
+  getCodeByUuid(uuid: {'uuid': string}): Observable<AccessCode> {
+    return this.http.post<AccessCode>(this.baseUrl + 'accesscodemanagement/v1/accesscode/uuid', uuid);
   }
 
-  saveAccessCode(visitorId: number, queueId: number) {
-    const accessCode: AccessCode = new AccessCode();
-    accessCode.visitorId = visitorId;
-    accessCode.queueId = queueId;
-    return this.http.post<AccessCode>(`${this.baseUrl}` + '/accesscodemanagement/v1/accesscode/', accessCode);
+  getEstimatedTimeByCode(code: AccessCode): Observable<EstimatedTime> {
+    return this.http.post<EstimatedTime>(this.baseUrl + 'accesscodemanagement/v1/accesscode/estimated', code);
+  }
+
+  getRemainingCodesCount(): Observable<RemainingCodes> {
+    return this.http.post<RemainingCodes>(this.baseUrl + 'accesscodemanagement/v1/accesscode/remaining', {});
   }
 }
 ----
 
-In the methods `getCurrentlyAttendedAccessCode` and `getVisitorAccessCode` we can see the use of `Pageable` and `FilterAccessCode` to match the `Criteria` in the backend like we explained in previous steps. In this case, the `getVisitorAccessCode` method will be used to see if the visitor has an `AccessCode` and the `getCurrentlyAttendedAccessCode` is going to recover the first `AccessCode` of the queue.
 
-- For the `QueueService` we are only going to need to find the active queue:
+We imported the classes AccessCode, EstimatedTime, NextCodeCto and RemainingCodes. Therefore we need to add them to the Frontend. Also we will add the `CodeUuid` -class for later use.  In `app/shared/backendModels/interfaces.ts` add:
+
+[source,typescript]
+----
+export class AccessCode {
+    id: number;
+    modificationCounter: number;
+    code: string;
+    uuid: string;
+    createdDate: number;
+    startTime?: number;
+    endTime?: number;
+    status: Status;
+    queueId: number;
+}
+
+export class EstimatedTime {
+    miliseconds: number;
+    defaultTimeByUserInMs: number;
+}
+
+export class RemainingCodes {
+    remainingCodes: number;
+}
+
+export class NextCodeCto {
+    accessCode: AccessCode;
+    remainingCodes: RemainingCodes;
+}
+
+export class CodeUuid {
+    uuid: string;
+}
+
+
+----
+
+We will obtain an error regarding Status. We therefore need to add Status as well. In `app/shared/backendModels` create a file called `enums.ts` and add the following code to it:
+
+[source,typescript]
+----
+export enum Status {
+    Waiting = 'WAITING',
+    Attending = 'ATTENDING',
+    Attended = 'ATTENDED',
+    Skipped = 'SKIPPED',
+    NotStarted = 'NOTSTARTED'
+}
+
+export enum Direction {
+    ASC = 'ASC',
+    DESC = 'DESC'
+}
+----
+
+In `interfaces.ts` we can now add the Status:
+
+
+[source,typescript]
+----
+import { Direction, Status} from './enums';
+----
+
+Now we are going to add a service that will retrieve the queue information of the backend.
+
+In `app/shared/services` add two files called `queue.service.spec.ts` and `queue.service.ts`:
+
+In the `queue.service.spec.ts` copy and paste the following code:
+
+[source, typescript]
+----
+import { TestBed } from '@angular/core/testing';
+
+import { QueueService } from './queue.service';
+
+describe('QueueService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
+
+  it('should be created', () => {
+    const service: QueueService = TestBed.get(QueueService);
+    expect(service).toBeTruthy();
+  });
+});
+----
+
+In the `queue.service.ts` add:
 
 [source, typescript]
 ----
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { Queue, FilterQueue, Pageable } from 'src/app/shared/backendModels/interfaces';
 import { environment } from 'src/environments/environment';
-import { map } from 'rxjs/operators';
+import { Queue } from './../backendModels/interfaces';
+import { Observable } from 'rxjs';
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -1020,135 +335,193 @@ export class QueueService {
 
   private baseUrl = environment.baseUrlRestServices;
 
-  constructor(private router: Router, private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  getActiveQueue(): Observable<Queue> {
-    const filters: FilterQueue = new FilterQueue();
-    filters.active = true;
-    const pageable: Pageable = new Pageable();
-    pageable.pageNumber = 0;
-    pageable.pageSize = 1;
-    filters.pageable = pageable;
-    return this.http.post<Queue>(`${this.baseUrl}` + '/queuemanagement/v1/queue/search', filters)
-    .pipe(
-         map(queues => queues['content'][0]),
-     );
+  getTodaysQueue(): Observable<Queue> {
+    return this.http.get<Queue>(this.baseUrl + 'queuemanagement/v1/queue/daily/');
   }
+
+  startQueue(queue: Queue): Observable<Queue> {
+    return this.http.post<Queue>(this.baseUrl + 'queuemanagement/v1/queue/start', queue);
+  }
+}
+
+----
+
+We now need to add the class `Queue` to `app/shared/backendModels/interfaces.ts`:
+
+[source, typescript]
+----
+export class Queue {
+    id: number;
+    modificationCounter: number;
+    minAttentionTime: number;
+    started: boolean;
+    createdDate: number;
 }
 ----
 
-Now we are going to create the template `view-queue.component.html` (which will use this data) and we will also introduce a new concept: "_async pipes in templates_".
+We will now add a new component `qr-overview-page` with `ng generate component qr-overview-page`.
 
-[source, html]
-----
-<td-layout *ngIf="{
-  accessCodeAttended: accessCodeAttended$ | async,
-  accessCodeVisitor: accessCodeVisitor$  | async,
-  queue: queue$ | async
-} as data;">
-  <div *ngIf="data.queue">
-    <mat-card>
-    <img mat-card-image src="assets/images/jumptheq.png">
-    
-      <div *ngIf="data.accessCodeVisitor">
-        <div class="text-center row">
-          <h1 style="margin-bottom:10px;" class="text-left text-xl push-md">Your Number:</h1> 
-        </div>
-        <div class="text-center row">
-          <h1 style="font-size: 75px; margin:0px;" class="text-center text-xxl push-left-md">{{data.accessCodeVisitor.ticketNumber}}</h1> 
-        </div>
-        <div style="border-bottom: 2px solid black;" class="row">
-          <p class="push-left-md">Currently estimate time: 10:00:00</p>
-        </div>
-      </div>
-      <div class="text-center">
-        <div class="text-center row">
-          <h1 style="margin-bottom:10px;" class="text-left text-xl push-md">Currently Being Attended:</h1> 
-        </div>
-        <div class="row">
-          <h1 style="font-size: 100px" class="text-center text-xxl push-lg">{{data.accessCodeAttended?.ticketNumber}}</h1> 
-        </div>
-      </div>
-      <div style="border-top: 2px solid black;" class="pad-bottom-lg pad-top-lg text-center row" *ngIf="data.accessCodeVisitor === null">
-        <button mat-raised-button (click)="onJoinQueue(data.queue.id)" color="primary" class="text-upper">Join the queue</button> 
-      </div>
-    </mat-card>
-    <div *ngIf="data.accessCodeVisitor" style="margin: 8px;" class="row text-right">
-        <button mat-raised-button (click)="onLeaveQueue(data.accessCodeVisitor.id)" color="primary" class="text-upper">Leave the queue</button> 
-    </div>
-  </div>
-  <div *ngIf="data.queue === null || (data.queue !== null && data.queue.active === false)" class="row">
-    <h1 style="font-size: 50px" class="text-center text-xxl push-lg">The queue is not active try again later</h1> 
-  </div>
-</td-layout>
-----
-
-If you watch closely, the starting `td-layout` has an `*ngIf` inside it. This `*ngIf` allows us to asynchronously pipe the observables that we will asign in the next steps. This solution avoids having to use `subscribe()` (as it subscribes automatically) and -- as a result -- we dont have to worry about where to `unsubscribe()` from the observables.
-
-In this HTML, we give `*ngif` another use: We use it to hide certain panels. Using `accessCodeVisitor`, we hide the ticket number panel and the "leave the queue"-button and show the button to join the queue. On the contrary we can hide the ticket number and the "leave the queue"-button and only show the "join the queue"-button.
-
-[NOTE]
-====
-In this case, since we are using HTTP and the calls are finite, there wouldn't be any problems if you dont `unsubscribe()` from their corresponding observables. However, if -- for example -- we use an observable to keep track of an input and `subscribe()` to it but not controlling the `unsubcribe()` method, the app could end up containing a memory leak. This is because -- everytime we visit the component with the input -- it is going to create another subscription without unsubscribing from the last one.
-====
-
-Finally, to adapt the async pipe, the `ngOnInit()` method inside `view-queue.component.ts` now does not subscribe to the observable. In its place, we equal the queuers variable directly to the observable, so we can load it using `*ngIf`.
+In `qr-overview-page.component.ts` there should be
 
 [source, typescript]
 ----
 import { Component, OnInit } from '@angular/core';
-import { AccessCode, Queue } from '../shared/backendModels/interfaces';
-import { Observable, timer } from 'rxjs';
-import { AccessCodeService } from './services/access-code.service';
-import { switchMap } from 'rxjs/operators';
-import { AuthService } from '../core/authentication/auth.service';
-import { QueueService } from './services/queue.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-view-queue',
-  templateUrl: './view-queue.component.html',
-  styleUrls: ['./view-queue.component.scss']
+  selector: 'app-qr-overview-page',
+  templateUrl: './qr-overview-page.component.html',
+  styleUrls: ['./qr-overview-page.component.scss']
 })
-export class ViewQueueComponent implements OnInit {
-
-  accessCodeAttended$: Observable<AccessCode>;
-  accessCodeVisitor$: Observable<AccessCode>;
-  queue$: Observable<Queue>;
-
-  constructor(private accessCodeService: AccessCodeService, private queueService: QueueService, private authService: AuthService) { }
+export class QrOverviewPageComponent implements OnInit {
+  private myAngularxQrCode: string;
+  private host: string;
+  private hostname: string;
+  private origin: string;
+  constructor() {
+    this.myAngularxQrCode = environment.qrUrl;
+    this.host = window.location.host;
+    this.hostname = window.location.hostname;
+    this.origin = window.location.origin;
+  }
 
   ngOnInit() {
-     // Every minute we are going to update accessCodeAttended$ starting instantly
-    this.accessCodeAttended$ = timer(0, 60000).pipe(
-      // we switchMap and give it the value necesary from the accessCodeService
-      switchMap(() => {
-        return this.accessCodeService.getCurrentlyAttendedAccessCode();
-      })
-    );
-    this.accessCodeVisitor$ = this.accessCodeService.getVisitorAccessCode(this.authService.getUserId());
-    this.queue$ = this.queueService.getActiveQueue();
   }
 
-  onJoinQueue(queueId: number): void {
-    this.accessCodeVisitor$ = this.accessCodeService.saveAccessCode(this.authService.getUserId(), queueId);
+}
+
+----
+
+In `qr-overview-page.component.html` there should be
+
+[source, html]
+----
+<div class="qr-overview-page-container">
+    <qrcode [qrdata]="myAngularxQrCode" [size]="256" [level]="'M'"></qrcode>
+</div>
+----
+
+In `qr-overview-page.component.scss` there should be
+[source, scss]
+----
+.qr-overview-page-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+----
+
+
+
+
+
+We will now add a new component `visitor-overview-page`. Stop `ng-serve` and in `src/app` run `ng generate component visitor-overview-page` 
+
+We will need a service, that can manipulate the Uuid. We therefore create a new service. In `app/visitor-overview-page` create a new folder `shared`.
+In that folder we will add two files `local-storage.service.ts` and `local-storage.service.spec.ts`.
+
+In `local-storage.service.ts` add :
+
+[source, typescript]
+----
+import { Injectable } from '@angular/core';
+import * as uuid from 'uuid';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class LocalStorageService {
+  private storageKey = environment.localStorageUuidKey;
+
+  constructor() { }
+
+  setUuid() {
+    localStorage.setItem(this.storageKey, uuid.v4());
   }
 
-  onLeaveQueue(accessCodeId: number): void {
-    this.accessCodeService.deleteAccessCode(accessCodeId);
-    this.accessCodeVisitor$ = null;
+  getUuid(): string {
+    let value = localStorage.getItem(this.storageKey);
+    if (!value) {
+      this.setUuid();
+      value = localStorage.getItem(this.storageKey);
+    }
+    return value;
+  }
+
+  renewUuid(): string {
+    localStorage.removeItem(this.storageKey);
+    return this.getUuid();
   }
 }
 ----
 
-In this last component we assign the `Observables` when the component is initiated. After that, when clicking the "join the queue"-button, we assign a new `Observable` called `AccessCode` to the `accessCodeVisitor$`. Finally, when we leave the queue, we delete the `AccessCode` and set the `accessCodeVisitor` to null. Since we are using an async pipe, everytime we modify the status of the `Observables`, they are going to update the template.
+In `local-storage.service.spec.ts` add:
 
-image::images/devon4ng/3.BuildYourOwn/withCodeAccess.png[Queue Page with Access Code, 250]
+[source, typescript]
+----
+import { TestBed } from '@angular/core/testing';
 
-image::images/devon4ng/3.BuildYourOwn/withoutCodeAccess.png[Queue Page without Access Code, 250]
+import { LocalStorageService } from './local-storage.service';
 
-This is all on how to build your own devon4ng application. Now it's up to you to add features, change styles and do everything you can imagine doing with this app.
+describe('LocalStorageService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
 
-As a final step to complete the tutorial, however, we are going to run the app outside of our local machine by deploying it.
+  it('should be created', () => {
+    const service: LocalStorageService = TestBed.get(LocalStorageService);
+    expect(service).toBeTruthy();
+  });
+});
+----
 
-'''
-*Next Chapter*: link:devon4ng-deployment.asciidoc[Deploy your devon4ng App]
+
+
+
+Finally we are going to add a server related service. In `app/shared/services` add `server-side-events.service.ts` and `server-side-events.service.spec.ts` containing the following:
+
+In `server-side-events.service.ts` we will need:
+
+[source, typescript]
+----
+
+import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ServerSideEventsService {
+
+  private streamUrl = environment.streamUrl;
+  constructor() { }
+
+  getStream(): EventSource {
+    return new EventSource(this.streamUrl);
+  }
+}
+
+----
+ In `server-side-events.service.spec.ts`:
+
+[source, java]
+----
+import { TestBed } from '@angular/core/testing';
+
+import { ServerSideEventsService } from './server-side-events.service';
+
+describe('ServerSideEventsService', () => {
+  beforeEach(() => TestBed.configureTestingModule({}));
+
+  it('should be created', () => {
+    const service: ServerSideEventsService = TestBed.get(ServerSideEventsService);
+    expect(service).toBeTruthy();
+  });
+});
+
+----
+
+

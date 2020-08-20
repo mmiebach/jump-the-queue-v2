@@ -287,4 +287,4 @@ body {
 Now we have successfully set up a blank Angular project with Google Material and Covalent Teradata modules. We can continue by adding custom functionality and components to the app.
 
 '''
-*Next Chapter*: link:devon4ng-adding-custom-functionality.asciidoc[Customizing a devon4ng Project]
+*Next Chapter*: link:devon4ng-adding-custom-functionality-login-page.asciidoc[Customizing a devon4ng Project]
