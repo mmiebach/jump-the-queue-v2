@@ -102,7 +102,6 @@ This `CoreModule` has almost every module of the different components for *Angul
 
 Remember that we need to import this `CoreModule` module into the `AppModule` and inside every module of the different components that use *Angular Material* and *Covalent Teradata*. If a component does not have a module, it will be imported in the `AppModule` and hence automatically have the `CoreModule`. Our `app.module.ts` should have the following content:
 
-We will import a QRCodeModule for later use and the CoreModule we just created. The file should look like this:
 
 [source, typescript]
 ----
@@ -251,7 +250,7 @@ First we want to have a theme for our login-page. We will therefore modify the `
 }
 ----
 
-Second we want to have fields with for the username and password. In the `login-page.components.ts`We will hve:
+Second we want to have fields with for the username and password. In the `login-page.components.ts`. We will have:
 
 [source, typescript]
 ----
@@ -373,7 +372,7 @@ This will link the frontend to the backend we already finished.
 
 Now we want to create a login-button, that checks wether the inserted username and password is saved in the database.
 
-We will therefore create an authentification service: In the `app`-folder create a folder called `core`. In this folder create `auth.service.ts` and auth.service.spec.ts`.
+We will therefore create an authentification service: In the `app`-folder create a folder called `core`. In this folder create `auth.service.ts` and `auth.service.spec.ts`.
 
 `auth.service.ts` should contain the following:
 
@@ -429,7 +428,7 @@ describe('AuthService', () => {
 });
 ----
 
-We will also need to export the structure of the Owner class. This is done by creating a file `backendModels` in `app/shared`. Here we will create a new file called `interfaces.ts`.
+We will also need to export the structure of the Owner class. This is done by creating a folder `backendModels` in `app/shared`. Here we will create a new file called `interfaces.ts`.
 
 For the time being we will only add the owner class to this file:
 
@@ -504,7 +503,7 @@ Now we will implement the login and logout methods in `login.service.ts`:
 
 ----
 
-There will be errors regarding auth-service. We will therefor include aut service in the constructor. The constructor should look like this:
+We still need to include authservice in the constructor. The constructor should look like this:
 
 [source, typescript]
 ----
@@ -517,7 +516,7 @@ There will be errors regarding auth-service. We will therefor include aut servic
   ) { }
 ----
 
-We will now add these methods to the `login-page.component.ts`-file. We therefore have to import the LoginService, add the LoginService to the constructor and define the methods for the login-page.
+We will now add these methods to the `login-page.component.ts`-file. We have to import the LoginService, add the LoginService to the constructor and define the methods for the login-page.
 
 `login-page.component.ts` should now look like this:
 
@@ -535,7 +534,9 @@ export class LoginPageComponent implements OnInit {
 
   public username: string;
   public password: string;
-  constructor(private loginService: LoginService) { }
+  constructor(
+	private loginService: LoginService
+  ) { }
 
   ngOnInit() {
     this.username = 'adcenter';

@@ -566,9 +566,9 @@ import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCt
 import java.util.List;
 ... 
   @Override
-  public Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria) {
+  public AccessCodeEto findAccessCode(long id) {
 
-    return this.ucFindAccessCode.findAccessCodes(criteria);
+    return this.ucFindAccessCode.findAccessCode(id);
   }
 
   @Override

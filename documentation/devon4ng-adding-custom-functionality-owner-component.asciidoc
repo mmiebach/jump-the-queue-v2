@@ -34,7 +34,7 @@ import { OwnerOverviewPageComponent } from '../app/owner-overview-page/owner-ove
 ...
 ----
 
-When clicking on the Login-button now you should see the default owner-page. It should look like this:
+When clicking on the Login-button now you should see the default owner-page (make sure the backend is running as well!). It should look like this:
 
 image::images/devon4ng/custom-owner/owner-overview-default-page.png[Default Owner Page, 600] 
 
@@ -42,7 +42,7 @@ Now we want to adapt the Owner-Overview-Page and implement some functionality. I
 
 [source, typescript]
 ----
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { LoginService } from '../login-page/services/login.service';
 
@@ -96,6 +96,19 @@ Now we will add some style to the `owner-overview-page`.To the `owner-overview-p
     }
 }
 ----
+
+Now we can add the needed Button to Logout. The `owner-overview-page.html` should contain:
+
+[source, html]
+----
+<div class="owner-overview-page-container">
+  <div class="queueLogoContainer">
+      <button class="logout-button" mat-button (click)="onLogout()">Log out</button>
+  </div>
+</div>
+----
+
+
 
 
 We will now add an `auth-guard` service, that will redirect a user to the login-page, when not logged in. In `app/core` create two files: `auth-guard.service.spec.ts` and `auth-guard.service.ts`.
