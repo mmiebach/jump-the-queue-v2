@@ -65,7 +65,7 @@ The recommendation is to install the latest version, but keep in mind that to us
 Let’s install what is going to be the main language during development: TypeScript. This ES6 superset is tightly coupled to the Angular framework and will help us to get a final clean and distributable JavaScript code. This is installed globally with npm, the package manager used to install and create JavaScript modules in Node.js, that is installed along with Node. To install TypeScript, you don’t have to install npm explicitly, just run this command:
 
 ----
-npm install –g typescript
+npm install -g typescript
 ----
 
 === Yarn
@@ -73,6 +73,8 @@ npm install –g typescript
 Just like npm, https://yarnpkg.com/en/[Yarn] is a package manager for JavaScript/Node modules. Yarn is quite a bit faster and more usable in our opinion, so we decided to use it to manage the dependencies of devon4ng projects.
 
 To install Yarn, you only have to go to the official https://yarnpkg.com/en/docs/install[installation page] and follow the instructions.
+
+Or just run `npm install yarn -g`
 
 However, if you feel more comfortable with npm, you can keep using it.
 

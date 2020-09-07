@@ -457,6 +457,17 @@ Now we will implement the methods we  methods in UcFindAccessCodeImpl. In the `j
 
 [source, java]
 ----
+ private static final String QUEUE_LETTER_CODE = "Q";
+
+  private static final String FIRST_CODE_IN_QUEUE = "001";
+
+  private static final String LAST_CODE_IN_QUEUE = "999";
+
+  @Inject
+  Queuemanagement queueManagement;
+
+
+
 @Override
 	public RemainingCodes findRemainingCodes() {
 		RemainingCodes remaining = new RemainingCodes();
@@ -536,6 +547,9 @@ import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingC
 import com.devonfw.application.jtqj.general.common.api.Status;
 
 import java.util.Optional;
+
+import org.springframework.data.domain.Sort;
+
 ...
 ----
 
@@ -549,6 +563,7 @@ We still need to add the methods to the AccesscodeManagementImpl. In `accesscode
 ...
 import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingCodes;
 import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
+import java.util.List;
 ... 
   @Override
   public Page<AccessCodeEto> findAccessCodes(AccessCodeSearchCriteriaTo criteria) {
@@ -579,12 +594,6 @@ import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCt
 
     return this.ucFindAccessCode.findRemainingCodes();
   }
- 
-  @Overrride
-  public AccessCodeEto findAccessCode(long id) {
-
-    return this.ucFindAccessCode.findAccessCode(id);
-  }
 
 ----
 
@@ -598,6 +607,7 @@ Also we will define the methods `updateCodesOnStartQueue`, `NextCodeCto` and `Es
 ...
 
 import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeEto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
 
 public interface UcManageAccessCode {
 
@@ -695,7 +705,6 @@ We will need to import these classes to resove the resulting errors:
 ----
 ...
 import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.EstimatedTime;
-import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
 ...
 ----
 
@@ -722,6 +731,37 @@ Also, here is the part where we will use the methods that we created in the `Que
 [source,java]
 ----
 ...
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.devonfw.application.jtqj.accesscodemanagement.dataaccess.api.AccessCodeEntity;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.Accesscodemanagement;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeEto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeSearchCriteriaTo;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.EstimatedTime;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.usecase.UcManageAccessCode;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.base.usecase.AbstractAccessCodeUc;
+import com.devonfw.application.jtqj.accesscodemanagement.service.impl.rest.ServerSse;
+import com.devonfw.application.jtqj.general.common.api.Status;
+import com.devonfw.application.jtqj.queuemanagement.logic.api.Queuemanagement;
 
 @Named
 @Validated
@@ -850,10 +890,10 @@ public class UcManageAccessCodeImpl extends AbstractAccessCodeUc implements UcMa
 }
 ----
 
-Now we will deal with the errers in AccesscodemanagementImpl:
+Now we will deal with the errors in AccesscodemanagementImpl:
 
 
-We are going to add the needed methods we just defined:
+We are going to add the needed methods we just defined. In `accesscodemanagement/logic/impl/AccesscodemanagementImpl` add the following:
 
 [source, java]
 ----
@@ -944,6 +984,12 @@ Next we will implement the new method in UcFindAccessCodeImpl:
 
 [source, java]
 ----
+...
+@Inject
+  Accesscodemanagement accessCodeManagement;
+
+...
+
 @Override
 	public AccessCodeCto findUuidAccessCode(Uuid uuid) {
 		AccessCodeSearchCriteriaTo criteria = new AccessCodeSearchCriteriaTo();
@@ -1037,42 +1083,34 @@ Add `findUuidAccessCode` to `AccesscodemanagementImpl`:
 	}
 ----
 
-
-import List in `jtqj-core` -> `Accesscodemanagement`
-
-
 === Adding to the Service
+
+==== Accesscodemanagement services
 To add the new service, we need to add its definition to the `jtqj-api` in `accesscodemanagement/service/api/rest/AccesscodemanagementRestService.java`. We are going to create a new `/accessCode` REST resource bound to three methods, one called _findAccessCodeEtos_, another one called _saveAccessCode_ and yet another one called _deleteAccessCode_.
 
 [source,java]
 ----
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.springframework.data.domain.Page;
+
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.Accesscodemanagement;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeCto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeEto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeSearchCriteriaTo;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.EstimatedTime;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingCodes;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.Uuid;
+
 ...
-
-@Path("/accesscodemanagement/v1")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public interface AccesscodemanagementRestService {
-
-	/**
-	 * Delegates to {@link Accesscodemanagement#findAccessCode}.
-	 *
-	 * @param id the ID of the {@link AccessCodeEto}
-	 * @return the {@link AccessCodeEto}
-	 */
-	@GET
-	@Path("/accesscode/{id}/")
-	public AccessCodeEto getAccessCode(@PathParam("id") long id);
-
-	/**
-	 * Delegates to {@link Accesscodemanagement#saveAccessCode}.
-	 *
-	 * @param accesscode the {@link AccessCodeEto} to be saved
-	 * @return the recently created {@link AccessCodeEto}
-	 */
-	@POST
-	@Path("/accesscode/")
-	public AccessCodeEto saveAccessCode(AccessCodeEto accesscode);
-
 	/**
 	 * Delegates to {@link Accesscodemanagement#deleteAccessCode}.
 	 *
@@ -1081,6 +1119,27 @@ public interface AccesscodemanagementRestService {
 	@DELETE
 	@Path("/accesscode/{id}/")
 	public void deleteAccessCode(@PathParam("id") long id);
+
+	
+ 	/**
+   	* Delegates to {@link Accesscodemanagement#findAccessCode}.
+   	*
+   	* @param id the ID of the {@link AccessCodeEto}
+   	* @return the {@link AccessCodeEto}
+   	*/
+  	@GET
+  	@Path("/accesscode/{id}/")
+  	public AccessCodeEto getAccessCode(@PathParam("id") long id);
+	
+	/**
+   	* Delegates to {@link Accesscodemanagement#saveAccessCode}.
+   	*
+   	* @param accesscode the {@link AccessCodeEto} to be saved
+   	* @return the recently created {@link AccessCodeEto}
+   	*/
+  	@POST
+  	@Path("/accesscode/")
+  	public AccessCodeEto saveAccessCode(AccessCodeEto accesscode);
 
 	/**
 	 * Delegates to {@link Accesscodemanagement#findAccessCodeEtos}.
@@ -1149,6 +1208,22 @@ Then we need to implement the new methods in the `accesscodemanagement/service/i
 
 [source,java]
 ----
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.springframework.data.domain.Page;
+
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.Accesscodemanagement;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeCto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeEto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.AccessCodeSearchCriteriaTo;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.EstimatedTime;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.NextCodeCto;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.RemainingCodes;
+import com.devonfw.application.jtqj.accesscodemanagement.logic.api.to.Uuid;
+import com.devonfw.application.jtqj.accesscodemanagement.service.api.rest.AccesscodemanagementRestService;
+
 ...
 
 @Named("AccesscodemanagementRestService")
@@ -1203,7 +1278,55 @@ public class AccesscodemanagementRestServiceImpl implements Accesscodemanagement
 
 }
 ----
-To resolve th errors, import the needed Packages.
+
+==== Queuemanagement services
+
+In the `jtqj-api` in `queuemanagement.services.api.rest.QueuemanagementRestServices` add the services, that start the queue and find the daily Queue.
+
+[source, java]
+----
+...
+/**
+   * Delegates to {@link Queuemanagement#findDailyQueue}.
+   *
+   * @return the {@link QueueEto}
+   */
+  @GET
+  @Path("/queue/daily/")
+  public QueueEto findDailyQueue();
+
+ /**
+   * Delegates to {@link Queuemanagement#startQueue}.
+   *
+   * @param queue the {@link QueueEto} to be saved
+   * @return the recently created {@link QueueEto}
+   */
+  @POST
+  @Path("/queue/start")
+  public QueueEto startQueue(QueueEto queue);
+----
+
+Now in the `jtqj-core` in `queuemanagement.services.impl.rest` implement these methods:
+
+[source, java]
+----
+...
+
+@Override
+  public QueueEto findDailyQueue() {
+
+    return this.queuemanagement.findDailyQueue();
+  }
+
+  @Override
+  public QueueEto startQueue(QueueEto queue) {
+
+    return this.queuemanagement.startQueue(queue);
+  }
+
+----
+
+
 === Testing the Changes
 Now run the app again via Eclipse and use Postman to call the new save service via *POST*: +
 `http://localhost:8081/jumpthequeue/services/rest/accesscodemanagement/v1/accesscode/`

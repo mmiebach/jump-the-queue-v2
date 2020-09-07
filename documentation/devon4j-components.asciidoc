@@ -542,7 +542,7 @@ The errors related to QueueEntity will be resolved, when we create the correspon
 ====
 
 We will now resolve the erorrs related to `Status` by creating a new Enum `Status` in `jtqj-api/src/main/java/com.devonfw.application.jtqj.general.common.api`:
-Copy and paste the following code in your class.
+Copy and paste the following code in your enum.
 
 [source,java]
 ----
